@@ -1,0 +1,38 @@
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.list-group-item span {
+    font-size: 16px;
+    float: right;
+}
+
+.list-group-item a {
+    font-size: 16px;
+}
+
+
+.full-screen:hover {
+    cursor: pointer;
+}
+
+.full-screen {
+    margin-left: 10px;
+    color: #2b669a;
+}
+
+@media (max-width: 768px) {
+    .list-group-item span {
+        font-size: 14px;
+        float: right;
+    }
+
+    .list-group-item a {
+        font-size: 14px;
+    }
+}

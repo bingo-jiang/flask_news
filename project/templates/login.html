@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}佳猫资讯-登陆{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/login.css',_external=True) }}">
+{% endblock %}
+{% block content %}
+    <div class="container-fluid" style="margin-top: 10px;">
+        <div id="login-div" style="border-radius: 5px;border: 1px solid #00a8c6;margin: 10px auto;padding: 10px 10px;">
+            <p style="font-size: 28px;text-align: center;color: #2b669a;">登陆</p>
+            <form id="loginForm" method="POST" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" id="img_id" name="img_id" value="">
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label for="mobile">手机号</label><span id="for_mobile" class="error" style="color: red;"></span>
+                    <input type="text" name="mobile" id="mobile" class="form-control" placeholder="请输入手机号">
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label for="password">密码</label><span id="for_password" class="error" style="color: red;"></span>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="请输入密码">
+                </div>
+                <div class="form-group">
+                    <label for="pic_code">验证码</label><span id="for_pic_code" class="error" style="color: red;"></span>
+                    <div class="row">
+                        <div class="col-md-6" style="margin-top: 5px;">
+                            <input type="text" name="pic_code" id="pic_code" class="form-control" placeholder="请输入验证码"
+                                   autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <div id="code-div">
+                                <img id="imgCode" src="" alt="验证码" title="刷新" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a id="btnLogin" class="form-control btn btn-primary">
+                    登录
+                </a>
+                <div class="form-group register-to-login" style="text-align: center;margin-top: 10px;">
+                    <span>没有账号？立即</span><a href="/register">注册</a>
+                </div>
+                <div id="db_error" class="error" style="color: red;height: 8px;"></div>
+            </form>
+        </div>
+    </div>
+    <div style="height: 50px;"></div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            initImgCode();
+            newImgCode();
+            loginBtnClick();
+        });
+
+        function generateUuid() {
+            return Math.random().toString(36).substr(2);
+        }
+
+        function initImgCode() {
+            let $imgCodeBtn = $("#imgCode");
+            var randomStr = generateUuid();
+            $imgCodeBtn.attr('src', "/code?img_id=" + randomStr);
+            $imgCodeBtn.attr('img_id', randomStr);
+            $("#img_id").attr('value', randomStr);
+            //console.log()
+        }
+
+        function newImgCode() {
+            let $imgCodeBtn = $("#imgCode");
+            $imgCodeBtn.click(function () {
+                var newRandomStr = Math.random().toString(36).substr(2);
+                $(this).attr('src', "/code?img_id=" + newRandomStr);
+                $imgCodeBtn.attr('img_id', newRandomStr);
+                $("#img_id").attr('value', newRandomStr);
+            })
+        }
+
+        //显示错误提示框
+        function showErrorDiv(res) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(res.error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 5000)
+        }
+
+        //错误提示框居中
+        function divJustifyCenter(divWidth) {
+            let pageWidth = $(window).width();
+            let $div = $(".message-tips");
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+        }
+
+        function loginBtnClick() {
+            $("#btnLogin").click(function () {
+                const $mobile = $("#mobile").val();
+                const $password = $("#password").val();
+                const $pic_code = $("#pic_code").val();
+                let flags = 0;
+                if ($mobile.length === 0) {
+                    $("#for_mobile").text("手机号输入不能为空");
+                    flags = 1;
+                    let timeCount1 = setTimeout(function () {
+                        $('.error').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+                if ($password.length === 0) {
+                    $("#for_password").text("密码输入不能为空");
+                    flags = 1;
+                    let timeCount1 = setTimeout(function () {
+                        $('.error').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+                if ($pic_code.length === 0) {
+                    $("#for_pic_code").text("验证码输入不能为空");
+                    flags = 1;
+                    let timeCount1 = setTimeout(function () {
+                        $('.error').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+                if (flags === 0) {
+                    const LoginUrl = "/login";
+                    $.ajax({
+                        url: LoginUrl,
+                        data: $("#loginForm").serializeArray(),
+                        type: 'POST',
+                        dataType: 'JSON',
+                        success: function (res) {
+                            if (res.status) {//成功
+                                location.href = res.data;
+                            } else {//失败
+                                initImgCode();
+                                $.each(res.error, function (key, value) {
+                                    console.log(key, value);
+                                    $.each(value,function (k,v) {
+                                        $("#" + k).text(v);
+                                    let timeCount = setTimeout(function () {
+                                        $('.error').empty();
+                                        clearTimeout(timeCount)
+                                    }, 5000)
+                                    });
+                                });
+                            }
+                        }
+                    })
+                }
+            });
+        }
+    </script>
+{% endblock %}
+{% block news_category %}
+
+{% endblock %}

@@ -1,0 +1,171 @@
+#hot_news li a:hover {
+    text-decoration: none;
+}
+
+.first {
+    color: white;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid red;
+    mso-border-shadow: yes;
+    background: red;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.second {
+    color: white;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid #d9534f;
+    background: #d9534f;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.third {
+    color: white;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid #dca7a7;
+    background: #dca7a7;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.hot-other {
+    color: #0088bb;
+    font-size: 16px;
+    font-weight: bolder;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.new-img-and-title {
+    margin-top: 5px;
+    margin-left: 3px;
+}
+
+.mini-show-div {
+    margin-top: 5px;
+    margin-left: 3px;
+}
+
+.err-img-div {
+    text-align: center;
+}
+
+.err-img {
+    max-width: 200px;
+    height: auto;
+}
+
+.left-5 {
+    margin-left: 5px;
+}
+
+.new-item {
+    border: 1px solid #2b669a;
+    border-radius: 5px;
+    width: auto;
+    min-height: 130px;
+    margin-bottom: 10px;
+    background-color: white;
+}
+
+.title a:hover {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+.mini-show {
+    font-size: 14px;
+    color: #8c8c8c;
+    margin-left: 5px;
+}
+
+.img {
+    width: 100px;
+    height: 100px;
+}
+
+.img-div {
+    margin-top: 5px;
+}
+
+.left-10 {
+    margin-left: 10px;
+}
+
+@media (max-width: 480px) {
+    .img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .new-item {
+        min-height: 105px;
+    }
+
+    .left-10 {
+        margin-left: 5px;
+    }
+}
+
+.new-item {
+    border: 1px solid #2b669a;
+    border-radius: 5px;
+    width: auto;
+    min-height: 130px;
+    margin-bottom: 10px;
+    background-color: white;
+}
+
+.title a:hover {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+.mini-show {
+    font-size: 14px;
+    color: #8c8c8c;
+    margin-left: 3px;
+}
+
+.img {
+    width: 100px;
+    height: 100px;
+}
+
+.img-div {
+    margin-top: 5px;
+}
+
+.left-10 {
+    margin-left: 10px;
+}
+
+@media (max-width: 480px) {
+    .img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .new-item {
+        min-height: 105px;
+    }
+
+    .left-10 {
+        margin-left: 5px;
+    }
+}
+
+@media (max-width: 320px) {
+    .img {
+        width: 60px;
+        height: 60px;
+    }
+}
+

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册作者</title>
+    <link rel="stylesheet" href="{{ url_for("static",filename="plugins/bootstrap/css/bootstrap.css") }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script href="{{ url_for("static",filename="plugins/bootstrap/js/bootstrap.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user.css") }}">
+    <style>
+        .full-screen:hover {
+            cursor: pointer;
+        }
+
+        .full-screen {
+            margin-left: 10px;
+            color: #2b669a;
+        }
+
+        .img-case {
+            margin-bottom: 10px;
+        }
+
+        .img-case img {
+            max-width: 330px;
+            height: auto;
+        }
+    </style>
+
+</head>
+<body>
+{#消息提示框#}
+<div class="hidden post-success text-center">
+    <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+</div>
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{#内容#}
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <p>注册作者<span class="full-screen" data-type="open"><i class="fa fa-arrows-alt" aria-hidden="true"></i></span></p>
+    </div>
+    <div class="panel-body">
+        {% if data.author_obj.status==0 %}
+            <div class="text-center">
+                <div style="font-size: 54px;color: #2b669a;"><i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                </div>
+                <div>你的注册信息已成功提交，请待管理员审核！</div>
+            </div>
+        {% else %}
+            {% if data.author_obj.status==1 %}
+                <form class="info-form">
+                    <div class="form-group">
+                        <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">姓名</label>
+                        <input type="text" class="form-control input-text" id="name" name="name" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_card">身份证</label>
+                        <input type="text" class="form-control input-text" id="id_card" name="id_card"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">邮箱</label>
+                        <input type="text" class="form-control input-text" id="email" name="email" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">住址</label>
+                        <input type="text" class="form-control input-text" id="address" name="address"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="positive">身份证照片(正面)</label>
+                        <div class="img-case">
+                            <img src="{{ url_for("static",filename="images/id_card.jpg") }}" alt="身份证照片(正面)">
+                        </div>
+                        <input type="file" class="form-control id_card" id="positive" name="positive"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="negative">手持身份证照片(正面)</label>
+                        <div class="img-case">
+                            <img src="{{ url_for("static",filename="images/take_id_card.png") }}" alt="手持身份证照片(正面)">
+                        </div>
+                        <input type="file" class="form-control id_card" id="negative" name="negative"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group"><a class="form-control btn btn-primary" id="save_btn">提交</a></div>
+                </form>
+            {% else %}
+                <form class="info-form">
+                    <div class="form-group">
+                        <label><span style="color: red">*</span>未通过原因</label>
+                        <p class="form-control" style="color: red;">{{ data.author_obj.reason }}</p>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">姓名</label>
+                        <input type="text" class="form-control input-text" id="name" name="name" autocomplete="off"
+                               value="{{ data.author_obj.name }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_card">身份证</label>
+                        <input type="text" class="form-control input-text" id="id_card" name="id_card"
+                               autocomplete="off" value="{{ data.author_obj.id_card }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">邮箱</label>
+                        <input type="text" class="form-control input-text" id="email" name="email" autocomplete="off"
+                               value="{{ data.author_obj.email }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">住址</label>
+                        <input type="text" class="form-control input-text" id="address" name="address"
+                               autocomplete="off" value="{{ data.author_obj.address }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="positive">身份证照片(正面)</label>
+                        <div class="img-case">
+                            <img src="{{ data.author_obj.positive_ID_card_url }}" alt="身份证照片(正面)">
+                        </div>
+                        <input type="file" class="form-control id_card" id="positive" name="positive"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="negative">手持身份证照片(正面)</label>
+                        <div class="img-case">
+                            <img src="{{ data.author_obj.take_ID_card_url }}" alt="手持身份证照片(正面)">
+                        </div>
+                        <input type="file" class="form-control id_card" id="negative" name="negative"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group"><a class="form-control btn btn-primary" id="save_btn">提交</a></div>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+<script>
+    let flags = 0;
+    $(function () {
+        infoAlter();
+        largeIframeWindow();
+        inputBlur();
+        inputFocus();
+    });
+
+    //普通input框校验
+    function inputFocus() {
+        $(".input-text").on("focus", function () {
+            flags = 0;
+        })
+    }
+
+    function inputBlur() {
+        $(".input-text").on("blur", function () {
+            let $this = $(this);
+            const value = $this.val();
+            const id_card = $("#id_card").val();
+            const email = $("#email").val();
+            const id_reg = new RegExp("^\\d{15}|\\d{18}$");
+            const email_reg = new RegExp("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
+            //console.log(id_card,typeof (id_card));
+            if (!value) {
+                showErrorDiv("字段输入不能为空!");
+                flags = 1;
+            }
+            if ($(this).attr("name") === "id_card") {
+                if (!regCheck(id_reg, id_card)) {
+                    showErrorDiv("身份证格式错误!");
+                    flags = 1
+                }
+            }
+            if ($(this).attr("name") === "email") {
+                if (!regCheck(email_reg, email)) {
+                    showErrorDiv("邮箱格式错误!");
+                    flags = 1
+                }
+            }
+        })
+    }
+
+    //信息修改接口
+    function infoAlter() {
+        $(".id_card").change(function () {
+            let $this = $(this);
+            //利用文件阅读器对象(内置)完成头像的预览
+            //1.生成一个文件阅读器对象
+            let fileReaderObj = new FileReader();
+            //2.获取用户上传的文件
+            let fileObj = $(this)[0].files[0];
+            //3.将文件对象给文件阅读器对象
+            fileReaderObj.readAsDataURL(fileObj);
+            //4.利用阅读器将文件展示到前端(修改src属性）,需要等图片加载才执行，onload
+            fileReaderObj.onload = function () {
+                $this.siblings('.img-case').find('img').attr('src', fileReaderObj.result)
+            }
+        });
+        $("#save_btn").on("click", function () {
+            //let flags=0;
+            let positiveImg = $('#positive')[0].files[0];
+            let negativeImg = $('#negative')[0].files[0];
+            if (!positiveImg || !negativeImg) {
+                showErrorDiv("证件照图片上传不能为空!");
+                flags = 1;
+            }
+            //因为包含文件对象，new一个formData
+            let formDataObj = new FormData();
+            //1.添加普通数据的键值对；
+            $.each($(".info-form").serializeArray(), function (index, obj) {
+                console.log(obj);
+                formDataObj.append(obj.name, obj.value);
+            });
+            formDataObj.append('positive', positiveImg);
+            formDataObj.append('negative', negativeImg);
+            console.log(formDataObj.get("positive"), formDataObj.get("negative"));
+            const postUrl = "{{ url_for("user.author_register") }}";
+            if (flags === 0) {
+                $.ajax({
+                    url: postUrl,
+                    data: formDataObj,
+                    type: 'POST',
+                    contentType: false,
+                    processData: false,
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {//成功
+                            showSuccess();
+                            location.reload()
+                        } else {//失败
+                            showErrorDiv(res.error);
+                        }
+                    }
+                })
+            }
+        });
+    }
+
+    //正则校验
+    function regCheck(reg, obj) {
+        if (reg.test(obj)) {
+            return true;
+        }
+    }
+
+    //显示错误提示框
+    function showErrorDiv(error) {
+        let $msgDiv = $(".message-tips");
+        $msgDiv.removeClass("hidden");
+        $("#msg").text(error);
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $("#msg").empty();
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //显示成功提示框
+    function showSuccess() {
+        let $msgDiv = $(".post-success");
+        $msgDiv.removeClass("hidden");
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //消息提示框居中
+    function divJustifyCenter($div, divWidth) {
+        let pageWidth = $(window).width();
+        let toLeft = (pageWidth - divWidth) / 2;
+        $div.css("left", toLeft);
+        //console.log(pageWidth,divWidth,toLeft);
+    }
+
+
+    //调整左边栏头像位置
+    function adjustAvatar(parentWindow) {
+        let $item = parentWindow.find(".user-menu");
+        let $picDiv = parentWindow.find(".user-pic");
+        let distance = $item.offset();
+        let divWidth = $item.width();
+        let toLeft = distance.left;
+        let picDivWidth = $picDiv.width();
+        let allLeftDistance = (divWidth - picDivWidth) / 2 + toLeft;
+        $picDiv.css("left", allLeftDistance);
+        //console.log(allLeftDistance);
+    }
+
+    //放大iframe窗口
+    function largeIframeWindow() {
+        let $item = $(".full-screen");
+        let parentWindow = $(window.parent.document);
+        $item.on("click", function () {
+            let dealType = $item.attr("data-type");
+            if (dealType === "close") {
+                $item.attr("data-type", "open");
+                parentWindow.find(".user-menu").removeClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-8 col-sm-8 col-md-9 col-lg-9"
+                ).removeClass("col-xs-12 col-sm-12 col-md-12 col-lg-12");
+                adjustAvatar(parentWindow)
+            }
+            if (dealType === "open") {
+                $item.attr("data-type", "close");
+                parentWindow.find(".user-menu").addClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-12 col-sm-12 col-md-12 col-lg-12"
+                ).removeClass("col-xs-8 col-sm-8 col-md-9 col-lg-9");
+                adjustAvatar(parentWindow);
+            }
+        });
+        $item.hover(function () {
+            $item.css("font-size", "24px")
+        }, function () {
+            $item.css("font-size", "20px")
+        })
+    }
+</script>
+</body>
+</html>

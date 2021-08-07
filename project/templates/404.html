@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>404 访问错误</title>
+    <link rel="stylesheet" href="{{ url_for("static",filename='css/error404.css',_external=True) }}">
+</head>
+<body style="background: white;">
+<div id="container_for_404">
+    <p style="margin-left: 5px;">
+        <a href="{{ url_for('ac.index') }}">
+            <img src="{{ url_for('static',filename='images/default.jpg') }}" style="height:45px" alt="index">
+        </a>
+    </p>
+    <div style="margin-top:20px">
+        <p style=""><b style="">404.</b> 抱歉，您访问的内容不存在。</p>
+        <p class="d">可能是网址有误，或者对应的内容被删除，或者处于私有状态。</p>
+        <p style="color:#777;">代码改变世界</p>
+    </div>
+    <div class="robot">
+        <a href="{{ url_for("ac.index") }}">
+            <img src="{{ url_for('static',filename='images/loading.gif') }}" alt="404"/>
+        </a>
+    </div>
+    <div><a href="{{ url_for("ac.index") }}" target="_parent">返回佳猫资讯首页</a></div>
+</div>
+</body>
+</html>

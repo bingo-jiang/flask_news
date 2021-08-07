@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png"
+          href="{{ url_for('static',filename='images/02.ico',_external=True) }}"
+          sizes="48x48">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/bootstrap/css/bootstrap.min.css',_external=True) }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/admin.css',_external=True) }}">
+    <style>
+
+    </style>
+    {% block css %}
+
+    {% endblock %}
+</head>
+<body background="{{ url_for('static', filename='images/bg1.jpg',_external=True) }}">
+<nav class="navbar navbar-default" style="background-color:#2b669a;">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <a id="my_nav" class="navbar-toggle collapsed" data-toggle="collapse"
+               data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </a>
+            <a class="navbar-brand" href="{{ url_for("admin.index") }}" style="color: white;">后台管理中心</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                {% if request.admin %}
+                    <li><a href="{{ url_for('admin.manage') }}">管理中心</a></li>
+                    <li><a href="">{{ request.admin.nick_name }}</a></li>
+                    <li><a href="{{ url_for('admin.logout') }}">退出登录</a></li>
+                {% else %}
+                    <li><a data-toggle="modal" data-target="#myModal">登录</a></li>
+                {% endif %}
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+{#消息提示框#}
+<div class="hidden post-success text-center">
+    <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+</div>
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{% block content %}
+
+{% endblock %}
+</body>
+{% block js %}
+    <script>
+        $(function () {
+            function navAdjust() {
+                const $myNav = $("#my_nav");
+                $myNav.click(function () {
+                    let navFlag = $myNav.attr('aria-expanded');
+                    if (navFlag === "true") {
+                        $myNav.css("background-color", " #2b669a");
+                    } else {
+                        $myNav.css("background-color", " #2b669a");
+                    }
+                });
+            }
+        })
+    </script>
+{% endblock %}
+</html>

@@ -1,0 +1,185 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}评论表管理{% endblock %}
+
+{% block heading %}评论管理{% endblock %}
+
+{% block btn %}
+{#    <a class="btn btn-primary add" data-toggle="modal" data-target="#myModal" data-type="add">添加</a>#}
+{% endblock %}
+
+{% block content %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>ID</th>
+                <th>内容</th>
+                <th>用户</th>
+                <th>文章</th>
+                <th>父评论</th>
+                <th>点赞数</th>
+                <th>评论时间</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><p class="">{{ obj.id }}</p></td>
+                    <td><p class="">{{ obj.content }}</p></td>
+                    <td><p class="">{{ obj.user.nick_name }}</p></td>
+                    <td><p class="">{{ obj.news.title }}</p></td>
+                    <td><p class="">
+                        {% if obj.parent %}(id:{{ obj.parent.id }}){{ obj.parent.content }}{% else %}无{% endif %}
+                    </p></td>
+                    <td><p class="">{{ obj.like_count }}</p></td>
+                    <td><p class="">{{ obj.create_time }}</p></td>
+                    <td class="operation" data-id="{{ obj.id }}" data-content="{{ obj.content }}"
+                        data-clicks="{{ obj.like_count }}">
+                        <a class="btn btn-success btn-sm edit" data-toggle="modal" data-target="#myModal">编辑</a>
+                        <hr class="division">
+                        <a class="btn btn-danger btn-sm" data-id="{{ obj.id }}"
+                           data-toggle="modal" data-target="#deleteModal">删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">评论内容</h4>
+                </div>
+                <div class="modal-body" style="padding-top: 0;">
+                    <div class="form-group">
+                        <label for="clicks">点赞数</label>
+                        <input type="text" id="clicks" class="form-control" autocomplete="off" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="content">内容</label>
+                        <input type="text" id="content" class="form-control" autocomplete="off" value="">
+                    </div>
+                </div>
+                <div class="modal-footer" data-id="" data-content="">
+                    <a class="btn btn-default" data-dismiss="modal">取消</a>
+                    <a type="button" class="btn btn-danger edit-btn" data-type="edit">确定</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block css %}
+    <style>
+        .operation .btn {
+            max-width: 100px;
+        }
+
+        .operation .btn:hover {
+            color: white;
+            cursor: pointer;
+        }
+
+        .division {
+            margin-top: 3px;
+            margin-bottom: 0;
+            border-top: 0;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            showEditModal();
+            categoryEdit();
+            deleteComment();
+        });
+
+        function showEditModal() {
+            $(".edit").on("click", function () {
+                let cid = $(this).parent().attr("data-id");
+                let content = $(this).parent().attr("data-content");
+                let clicks = $(this).parent().attr("data-clicks");
+                $(".modal-footer").attr({"data-id": cid, "data-content": content});
+                $("#content").attr("value", content);
+                $("#clicks").attr("value", clicks);
+            });
+        }
+
+        function myPostAjax(targetUrl, params) {
+            $.ajax({
+                url: targetUrl,
+                type: "POST",
+                headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                data: params,
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        successFunction();
+                    } else {
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        }
+
+        function categoryEdit() {
+            $('.edit-btn').on('click', function () {
+                let deal_type = $(this).attr("data-type");
+                let cid = $(this).parent().attr("data-id");
+                let oldContent = $(this).parent().attr("data-content");
+                let getUrl = "{{ url_for("admin.manage_comment") }}";
+                let content = $("#content").val();
+                let clicks = $("#clicks").val();
+                let params = {};
+                if (deal_type === "edit") {
+                    if (content === oldContent) {
+                        showErrorDiv("内容没有改动");
+                        return false
+                    }
+                    if (!content || !clicks) {
+                        showErrorDiv("输入为空");
+                        return false
+                    }
+                    params = {"cid": cid, "deal_type": deal_type, "content": content, "clicks": clicks};
+                } else {
+                    params = {};
+                }
+                console.log(params);
+                myPostAjax(getUrl, params);
+            })
+        }
+
+        function deleteComment() {
+            $("#deleteBtn").on("click", function () {
+                let deal_type = $(this).attr("data-type");
+                let cid = $(this).attr("data-id");
+                let ajaxParams = {};
+                let ajaxUrl = "{{ url_for("admin.manage_comment") }}";
+                if (!deal_type || !cid) {
+                    showErrorDiv("输入为空");
+                    return false
+                }
+                ajaxParams = {"cid": cid, "deal_type": deal_type};
+                myPostAjax(ajaxUrl,ajaxParams);
+            })
+        }
+    </script>
+{% endblock %}
+
+

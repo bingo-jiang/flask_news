@@ -1,0 +1,63 @@
+#logo_pic{
+    min-width: 50px;
+    min-height: 50px;
+    max-width: 52px;
+    max-height: 52px;
+    border-radius: 25px;
+}
+.nav-avatar{
+    width: 50px;
+    max-height: 52px;
+    border-radius: 25px;
+}
+
+#my_nav:hover {
+    background: #2b669a;
+    cursor: pointer;
+}
+
+#my_nav:active {
+    background: #2b669a;
+}
+
+#my_nav_bar1 li a{
+    color: white;
+}
+
+#my_nav_bar1 li a:hover {
+    background: #2b669a;
+    border-bottom: 2px solid white;
+    cursor: pointer;
+}
+
+#my_nav_bar1 li a:active {
+    background-color: #2b669a;
+}
+
+#my_nav_bar2 li a {
+    color: white;
+}
+
+#my_nav_bar2 li a:hover {
+    background-color: #2b669a;
+    cursor: pointer;
+}
+
+#my_nav_bar2 li a:active {
+    background-color: #2b669a;
+}
+
+.active {
+    border-bottom: 2px solid white;
+}
+.pic_logo{
+    float: left;
+    padding: 0;
+    margin-right: 10px;
+}
+@media (max-width: 768px){
+    .pic_logo{
+        margin-left: 10px;
+        margin-right: 5px;
+    }
+}

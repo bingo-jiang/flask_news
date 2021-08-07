@@ -1,0 +1,179 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}评论表管理{% endblock %}
+
+{% block heading %}评论表管理{% endblock %}
+
+{% block btn %}
+    {#    <a class="btn btn-primary add" data-toggle="modal" data-target="#myModal" data-type="add">添加</a>#}
+{% endblock %}
+
+{% block content %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>昵称</th>
+                <th>姓名</th>
+                <th>身份证</th>
+                <th>邮箱</th>
+                <th>住址</th>
+                <th>身份证正面图</th>
+                <th>手持身份证正面图</th>
+                <th>审核状态</th>
+                <th>原因</th>
+                <th>提交时间</th>
+                <th>审核操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><p class="">{{ obj.user.nick_name }}</p></td>
+                    <td><p class="">{{ obj.name }}</p></td>
+                    <td><p class="">{{ obj.id_card }}</p></td>
+                    <td><p class="">{{ obj.email }}</p></td>
+                    <td><p class="">{{ obj.address }}</p></td>
+                    <td><a href="{{ obj.positive_ID_card_url }}" target="_blank">身份证正面照片</a></td>
+                    <td><a href="{{ obj.take_ID_card_url }}" target="_blank">手持身份证正面照片</a></td>
+                    <td><p class="">
+                        {% if obj.status==1 %}审核通过
+                        {% elif obj.status==0 %}待审核
+                        {% else %}审核未通过
+                        {% endif %}
+                    </p></td>
+                    <td><p class="">{{ obj.reason }}</p></td>
+                    <td><p class="">{{ obj.create_time }}</p></td>
+                    <td class="operation" data-id="{{ obj.id }}">
+                        {% if obj.status==1 %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="drawback">
+                                撤回审核<i class="fa fa-undo" aria-hidden="true"></i>
+                            </a>
+                        {% elif obj.status==0 %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="agree">
+                                同意<i class="fa fa-check" aria-hidden="true"></i>
+                            </a>
+                            <hr class="division">
+                            <a class="btn btn-danger btn-sm clearfix reject" data-type="reject" data-toggle="modal"
+                               data-target="#myModal" data-content="{{ obj.reason }}">
+                                不同意<i class="fa fa-times" aria-hidden="true"></i>
+                            </a>
+                        {% else %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="agree">
+                                同意<i class="fa fa-check" aria-hidden="true"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">不通过原因</h4>
+                </div>
+                <div class="modal-body text-center" style="padding-top: 0;">
+                    <label for="reason"></label>
+                    <textarea id="reason" name="reason" placeholder="请输入原因"></textarea>
+                </div>
+                <div class="modal-footer" data-id="">
+                    <a class="btn btn-default" data-dismiss="modal">取消</a>
+                    <a type="button" class="btn btn-danger examine" data-type="reject">
+                        驳回<i class="fa fa-times" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block css %}
+    <style>
+        .operation .btn {
+            max-width: 100px;
+        }
+
+        .operation .btn:hover {
+            color: white;
+            cursor: pointer;
+        }
+
+        .division {
+            margin-top: 3px;
+            margin-bottom: 0;
+            border-top: 0;
+            width: 100%;
+        }
+
+        #reason {
+            resize: none;
+            width: 100%;
+            height: auto;
+            min-height: 150px;
+            border: 1px solid #8c8c8c;
+            box-shadow: inset 0 1px 1px #d4d4d4;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        #reason:focus {
+            border: 1px solid #2b669a;
+            resize: vertical;
+            box-shadow: 0 0 1px 0 #2aabd2;
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            examineClick();
+            showReasonDiv();
+        });
+
+        function showReasonDiv() {
+            $(".reject").on("click", function () {
+                let nid = $(this).parent().attr("data-id");
+                let reason=$(this).attr("data-content");
+                $("#reason").text(reason);
+                $(".modal-footer").attr("data-id", nid);
+            });
+        }
+
+        function examineClick() {
+            $('.examine').on('click', function () {
+                let deal_type = $(this).attr("data-type");
+                let nid = $(this).parent().attr("data-id");
+                let getUrl = "{{ url_for("admin.manage_author_register") }}";
+                let reason = $("#reason").val();
+                let params = {};
+                if (deal_type === "reject") {
+                    params = {"nid": nid, "deal_type": deal_type, "reason": reason};
+                    if (!reason) {
+                        showErrorDiv("输入为空");
+                        return false
+                    }
+                } else {
+                    params = {"nid": nid, "deal_type": deal_type};
+                }
+                //console.log(params);
+                myPostAjax(getUrl,params);
+            })
+        }
+    </script>
+{% endblock %}
+
+

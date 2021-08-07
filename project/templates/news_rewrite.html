@@ -1,0 +1,328 @@
+{% extends 'detail_base.html' %}
+{% block title %}
+    新闻编写-佳猫新闻
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.preview.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/detail.css',_external=True) }}">
+    <style>
+        .fa-quote-left {
+            position: absolute;
+            left: 3px;
+            top: 3px;
+        }
+
+        .fa-quote-right {
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+        }
+
+        a:hover {
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .edit-main {
+            margin: 0 auto;
+            float: none !important;
+        }
+
+        .pd-0 {
+            padding: 0 !important;
+        }
+
+        .edit-btn {
+            max-width: 40%;
+            float: right !important;
+            margin-right: 15px;
+        }
+
+    </style>
+{% endblock %}
+{% block main %}
+    <div class="edit-main col-lg-9 col-md-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">编辑
+                <div style="float: right"><a href="{{ url_for("user.center") }}">返回用户中心</a></div>
+                <div class="clearfix"></div>
+            </div>
+            <div class="panel-body">
+                <form id="news_form" class="form-horizontal">
+                    <div class="form-group">
+                        <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="title" class="col-lg-2 control-label">
+                            标题
+                        </label>
+                        <div class="col-lg-10">
+                            <input class="form-control" type="text" id="title" name="title" autocomplete="off"
+                                   value="{{ data.news_obj.title }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="digest" class="col-lg-2 control-label">
+                            摘要
+                        </label>
+                        <div class="col-lg-10">
+                            <input class="form-control" type="text" id="digest" name="digest" autocomplete="off"
+                                   value="{{ data.news_obj.digest }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {% for field in data.form %}
+                            {% if field.name=="csrf_token" %}
+                            {% else %}
+                                <label for="content" class="col-lg-2 control-label">
+                                    {{ field.label }}
+                                </label>
+                                <div class="col-lg-10">
+                                    <div id="md_editor">
+                                        {{ data.form.content }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="form-group">
+                        <label for="index_pic" class="col-lg-2 control-label">
+                            封面图片
+                        </label>
+                        <div class="col-lg-10">
+                            <input type="file" id="index_pic" name="index_pic">({{ data.news_obj.index_image_url }})
+                        </div>
+                    </div>
+                    <div class="form-group clearfix">
+                        <div class="col-xs-6 col-md-6 pd-0">
+                            <label for="category" class="col-lg-4 control-label">
+                                分类
+                            </label>
+                            <div class="col-lg-8">
+                                <select class="form-control" name="category" id="category">
+                                    {% for item in data.category_choices %}
+                                        {% if item.id==data.news_obj.category_id %}
+                                            <option data-id="{{ item.id }}" selected>{{ item.name }}</option>
+                                        {% else %}
+                                            <option data-id="{{ item.id }}">{{ item.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-md-6 pd-0">
+                            <label for="source" class="col-lg-4 control-label">
+                                来源
+                            </label>
+                            <div class="col-lg-8">
+                                <input class="form-control" type="text" id="source" name="source" autocomplete="off"
+                                       value="{{ data.news_obj.source }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <a class="btn btn-primary edit-btn save_news">保存</a>
+                        <a class="btn btn-success edit-btn" data-toggle="modal" data-target="#myModal">预览</a>
+                        <div class="clearfix"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- 预览Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div><h2 id="preview-title"></h2></div>
+                    <div class="author-container">
+                        <a class="font-15px">
+                            作者：<span style="font-size: 18px;">{{ request.user.nick_name }}</span>
+                        </a>
+                    </div>
+                    <div class="introduction bottom-10px">
+                        <p class="mini-show right-10px float_left">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i>
+                            <span id="preview-time"></span>
+                        </p>
+                        <span class="mini-show right-10px float_left">来源：<span id="preview-source"></span></span>
+                        <span class="mini-show float_right">
+                            <i class="fa fa-commenting-o" aria-hidden="true"></i>0
+                        </span>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div>
+                        <hr class="division">
+                    </div>
+                    <div class="news-digest bottom-10px"><span id="preview-digest"></span></div>
+                    <div class="news-content bottom-10px" id="preview-markdown">
+                        <label for="preview-content"></label>
+                        <textarea id="preview-content">{{ data.news_obj.content }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-default" data-dismiss="modal">取消</a>
+                    <a class="btn btn-primary save_news">发布</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/editormd.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/jquery.flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/marked.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/prettify.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/raphael.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/sequence-diagram.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/underscore.min.js') }}"></script>
+    <script>
+        $(function () {
+            initMdEditor();
+            saveNewsClick();
+            afterModalShown();
+            addSymbol();
+            initPreviewMdEditor();
+            {% if data.error %}
+                showErrorDiv(data.error);
+            {% endif %}
+        });
+
+        /*初始化预览md编辑器*/
+        function initPreviewMdEditor() {
+            editormd.markdownToHTML('preview-markdown', {
+                htmlDecode: "script,iframe,style",
+            })
+        }
+
+        //摘要前后添加特殊符号
+        function addSymbol() {
+            let $target = $(".news-digest span");
+            $target.before('<i class="fa fa-quote-left" aria-hidden="true"></i>');
+            $target.after('<i class="fa fa-quote-right" aria-hidden="true"></i>');
+        }
+
+        //预览modal
+        function afterModalShown() {
+            $('#myModal').on('show.bs.modal', function (event) {
+                let title = $("#title").val();
+                let digest = $("#digest").val();
+                let content = $(".editormd-markdown-textarea").val();
+                let source = $("#source").val();
+                let myDate = new Date();
+                let t = myDate.toLocaleString();
+                $("#preview-title").text(title);
+                $("#preview-digest").text(digest);
+                //document.getElementById("preview-content").innerHTML = content;
+                $("#preview-source").text(source);
+                $("#preview-time").text(t);
+            });
+        }
+
+
+        //发布按钮
+        function saveNewsClick() {
+            $(".save_news").on("click", function () {
+                let index_pic = $('#index_pic')[0].files[0];
+                let title = $("#title").val();
+                let digest = $("#digest").val();
+                let content = $("#content").val();
+                let category = $("#category").val();
+                let source = $("#source").val();
+                //因为包含文件对象，new一个formData
+                let formDataObj = new FormData();
+                //1.添加普通数据的键值对；
+                $.each($("#news_form").serializeArray(), function (index, obj) {
+                    console.log(index, obj);
+                    formDataObj.append(obj.name, obj.value);
+                });
+                formDataObj.append('index_pic', index_pic);
+                //console.log(formDataObj.get("index_pic"), formDataObj.get('title'));
+                let params = formDataObj;
+                let requestUrl = "{{ url_for("user.news_rewrite",news_id=data.news_obj.id) }}";
+                myAjaxForFile(requestUrl, params);
+            })
+        }
+
+        //初始化编辑器
+        function initMdEditor() {
+            let picUpload = "{{ url_for("user.pic_upload") }}";
+            editormd('md_editor', {
+                placeholder: '请输入内容',
+                height: 600,
+                path: "{{ url_for("static",filename="plugins/md-editor/lib/") }}",
+                imageUpload: true,/*支持本地图片上传*/
+                imageUploadURL: picUpload,/*上传图片的url*/
+                imageFormats: ["jpg", "png", "jpeg", "gif"]/*支持的图片格式*/
+            })
+        }
+
+        //封装的Ajax请求(带文件对象的请求)
+        function myAjaxForFile(targetUrl, params) {
+            $.ajax({
+                url: targetUrl,
+                type: "POST",
+                headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                data: params,
+                dataType: "JSON",
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.status) {
+                        successFunction();
+                    } else {
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        }
+
+        //Ajax成功响应后显示提示并刷新
+        function successFunction() {
+            showSuccess();
+            let aTimeOut = setTimeout(function () {
+                location.reload();
+                clearTimeout(aTimeOut);
+            }, 2000)
+        }
+
+        //显示错误提示框
+        function showErrorDiv(error) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv, $msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 1500)
+        }
+
+        //显示成功提示框
+        function showSuccess() {
+            let $msgDiv = $(".post-success");
+            $msgDiv.removeClass("hidden");
+            $msgDiv.width();
+            divJustifyCenter($msgDiv, $msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 1500)
+        }
+
+        //消息提示框居中
+        function divJustifyCenter($div, divWidth) {
+            let pageWidth = $(window).width();
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+            //console.log(pageWidth,divWidth,toLeft);
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}后台管理-首页{% endblock %}
+{% block css %}
+    <style>
+        .admin-index {
+            text-align: center;
+            font-size: 44px;
+            color: #2b669a;
+        }
+
+        .admin-index img {
+            width: 200px;
+            height: 200px;
+            border-radius: 100px;
+        }
+
+        .admin-index a {
+            font-size: 32px;
+        }
+
+        .modal {
+            top: 20% !important;
+        }
+
+        .admin-index p {
+            color: white;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="admin-index">
+        <img src="{{ url_for("static",filename="images/logo.jpeg") }}" alt="logo">
+        <p>佳猫新闻</p>
+        <p>后台管理中心</p>
+        <a class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">管理员登录</a>
+    </div>
+    {#消息提示框#}
+    <div class="hidden post-success text-center" style="z-index: 99999">
+        <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+    </div>
+    <div class="message-tips hidden" style="z-index: 99999">
+        <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+        <div class="text-center"><span id="msg"></span></div>
+    </div>
+    <!-- LoginModal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">管理员登录</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="info-form">
+                        <div class="form-group">
+                            <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">账号/手机号</label>
+                            <input type="text" class="form-control" id="name" name="name" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="pwd">密码</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="pwd" name="pwd" autocomplete="off">
+                                <a class="input-group-addon show-pwd" style="color: #2b669a">
+                                    <i class="fa fa-eye-slash" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="form-group"><a class="form-control btn btn-primary" id="admin_btn">登录</a></div>
+                        <div class="form-group">
+                            <a class="form-control btn btn-warning" data-dismiss="modal">关闭</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            showPassword();
+            adminLogin();
+        });
+
+        //显示成功提示框
+        function showSuccess() {
+            let $msgDiv = $(".post-success");
+            $msgDiv.removeClass("hidden");
+            $msgDiv.width();
+            divJustifyCenter($msgDiv, $msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 1500)
+        }
+
+        //显示错误提示框
+        function showErrorDiv(error) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv, $msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 1500)
+        }
+
+        //消息提示框居中
+        function divJustifyCenter($div, divWidth) {
+            let pageWidth = $(window).width();
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+            //console.log(pageWidth,divWidth,toLeft);
+        }
+
+        //显示密码输入
+        function showPassword() {
+            let $showPwd = $(".show-pwd");
+            $showPwd.on("click", function () {
+                let currentType = $(this).siblings("input").attr("type");
+                if (currentType === "password") {
+                    $(this).siblings("input").attr("type", "text");
+                    $(this).find(".fa").addClass("fa-eye");
+                    $(this).find(".fa").removeClass("fa-eye-slash");
+                }
+                if (currentType === "text") {
+                    $(this).siblings("input").attr("type", "password");
+                    $(this).find(".fa").addClass("fa-eye-slash");
+                    $(this).find(".fa").removeClass("fa-eye");
+                }
+            });
+
+        }
+
+        //密码修改接口
+        function adminLogin() {
+            $("#admin_btn").on('click', function () {
+                const name = $("#name").val();
+                const pwd = $("#pwd").val();
+                if (!name) {
+                    showErrorDiv("账号字段输入不能为空!");
+                    return false;
+                }
+                if (!pwd) {
+                    showErrorDiv("密码字段输入不能为空!");
+                    return false
+                }
+
+                const postUrl = "{{ url_for("admin.login") }}";
+                $.ajax({
+                    url: postUrl,
+                    data: $(".info-form").serializeArray(),
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {//成功
+                            showSuccess();
+                            let aTimeOut = setTimeout(function () {
+                                clearTimeout(aTimeOut);
+                                window.location.href = res.data;
+                            }, 1000);
+                        } else {//失败
+                            showErrorDiv(res.error);
+                        }
+                    }
+                })
+            });
+        }
+    </script>
+{% endblock %}

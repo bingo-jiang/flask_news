@@ -1,0 +1,120 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}后台管理中心{% endblock %}
+{% block css %}
+    <style>
+        .select {
+            border-left: 3px solid red !important;
+            border-right: 3px solid red !important;
+        }
+
+        .select a {
+            color: #2b669a !important;
+        }
+
+
+        .menu-heading {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .list-group-item {
+            text-align: center;
+        }
+
+        .panel-primary {
+            border: none !important;
+        }
+
+        .menu-choice {
+            color: #000;
+        }
+
+        .logout-btn .btn {
+            border-radius: unset !important;
+        }
+
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="manage-main">
+        <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2 manage-menu">
+            <div class="panel panel-primary">
+                <div class="panel-heading menu-heading">菜单栏</div>
+                <ul class="list-group menu-choices">
+                    <li class="select list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.manage_user") }}" target="main_frame">用户表</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.manage_news") }}" target="main_frame">新闻表</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.news_category") }}" target="main_frame">分类表</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.manage_comment") }}" target="main_frame">评论表</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.manage_notice") }}" target="main_frame">公告表</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("admin.manage_author_register") }}" target="main_frame">作者信息表</a>
+                    </li>
+                    <li class="logout-btn">
+                        <a class="btn btn-danger" href="{{ url_for("admin.logout") }}">退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-xs-9 col-sm-9 col-md-10 col-lg-10 iframe-window">
+            <div class="embed-responsive embed-responsive-4by3 info-show">
+                <iframe class="embed-responsive-item" src="{{ url_for("admin.manage_user") }}" id="main_frame"
+                        name="main_frame"></iframe>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        $(function () {
+            windowChange();
+            choiceClickBtn();
+            logoutBtnAdjust();
+        });
+
+        //绑定网页宽度变化
+        function windowChange() {
+            $(window).resize(function () {
+                logoutBtnAdjust();
+            })
+        }
+
+        //退出登录按钮样式设置
+        function logoutBtnAdjust() {
+            let logoutBtn = $(".logout-btn");
+            let windowWidth = $(window).width();
+            if (windowWidth < 369) {
+                logoutBtn.find("a").text("退出");
+            } else {
+                logoutBtn.find("a").text("退出登录");
+            }
+            let liWidth = logoutBtn.siblings('.list-group-item').innerWidth();
+            let liWidth2 = logoutBtn.siblings('.list-group-item').width();
+            let liWidth3 = logoutBtn.siblings('.list-group-item').outerWidth();
+            logoutBtn.find('a').css("width", liWidth3);
+            //console.log(windowWidth,liWidth,liWidth2,liWidth3);
+        }
+
+
+        //菜单选项点击事件
+        function choiceClickBtn() {
+            $(".menu-choice").on('click', function () {
+                $(this).parent().siblings().removeClass("select");
+                $(this).parent().addClass("select");
+                $(this).css("text-decoration", "none");
+            })
+        }
+    </script>
+{% endblock %}

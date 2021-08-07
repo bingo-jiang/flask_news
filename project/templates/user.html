@@ -1,0 +1,201 @@
+{% extends 'detail_base.html' %}
+{% block title %}
+    用户中心-佳猫资讯
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for("static",filename="css/user.css") }}">
+    <style>
+        a:hover {
+            text-decoration: none;
+        }
+
+        .select a {
+            color: #2b669a !important;
+        }
+
+        .user-pic {
+            width: 120px;
+            height: 120px;
+            position: absolute;
+            left: 10px;
+            top: -50px;
+        }
+
+        .user-pic img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+        }
+
+        .user-menu {
+            max-height: 600px;
+            background: #fff;
+            margin: 60px 0 0 0;
+            position: relative;
+        }
+
+        .user-name {
+            text-align: center;
+            margin-top: 60px;
+            font-size: 18px;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+
+        .user-choice {
+            margin-top: 15px;
+        }
+
+        .user-choice li {
+            text-align: center;
+        }
+
+        .user-choice li a {
+            color: black;
+            cursor: pointer;
+        }
+
+        .user-choice li a:hover {
+            cursor: pointer;
+        }
+
+        .info-show {
+            background: white;
+            min-height: 500px;
+        }
+
+        @media (max-width: 361px) {
+            .user-pic {
+                width: 80px;
+                height: 80px;
+                position: absolute;
+                top: -30px;
+            }
+
+            .user-name span {
+                font-size: 14px;
+            }
+
+            .user-pic img {
+                width: 60px;
+                height: 60px;
+                border-radius: 30px;
+            }
+
+            .user-menu {
+                max-height: 1200px;
+                margin: 60px 0 0 0;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .menu-choice {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+{% endblock %}
+{% block main %}
+    <div class="container-fluid padding-0">
+        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3 user-menu">
+            <div class="user-pic text-center">
+                <a href="{{ request.user.avatar_url }}" target="_self">
+                    <img src="{{ request.user.avatar_url }}" alt="用户头像">
+                </a>
+            </div>
+            <div class="text-center user-name"><span>{{ request.user.nick_name }}</span></div>
+            <ul class="list-group user-choice">
+                <li class="select list-group-item">
+                    <a class="menu-choice" href="{{ url_for("user.base_info") }}" target="main_frame">基本资料</a>
+                </li>
+                <li class="list-group-item">
+                    <a class="menu-choice" href="{{ url_for("user.avatar") }}" target="main_frame">头像设置</a>
+                </li>
+                <li class="list-group-item">
+                    <a class="menu-choice" href="{{ url_for("user.password") }}" target="main_frame">密码修改</a>
+                </li>
+                <li class="list-group-item">
+                    <a class="menu-choice" href="{{ url_for("user.my_collections") }}" target="main_frame">我的收藏</a>
+                </li>
+                <li class="list-group-item">
+                    <a class="menu-choice" href="{{ url_for("user.my_idols") }}" target="main_frame">我的关注</a>
+                </li>
+                {% if request.user.is_author %}
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("user.news_edit") }}" target="_parent">写作中心</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="menu-choice" href="{{ url_for("user.news_issues") }}" target="main_frame">我的新闻</a>
+                    </li>
+                {% else %}
+                    <li class="list-group-item">
+                        <a class="menu-choice" href ="{{ url_for("user.author_register") }}"  target="main_frame">注册作者</a>
+                    </li>
+                {% endif %}
+                <div class="logout-btn">
+                    <a class="btn btn-danger" href="{{ url_for("ac.logout") }}">退出登录</a>
+                </div>
+            </ul>
+        </div>
+        <div class="col-xs-8 col-sm-8 col-md-9 col-lg-9 iframe-window">
+            <div class="embed-responsive embed-responsive-4by3 info-show">
+                <iframe class="embed-responsive-item" src="{{ url_for("user.base_info") }}" id="main_frame"
+                        name="main_frame"></iframe>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            adjustAvatar();
+            windowChange();
+            choiceClickBtn();
+            logoutBtnAdjust();
+        });
+
+        //绑定网页宽度变化
+        function windowChange() {
+            $(window).resize(function () {
+                adjustAvatar();
+                logoutBtnAdjust();
+            })
+        }
+
+        //退出登录按钮样式设置
+        function logoutBtnAdjust() {
+            let logoutBtn=$(".logout-btn");
+            let windowWidth=$(window).width();
+            if (windowWidth<369){
+                logoutBtn.find("a").text("退出");
+            }else {
+                logoutBtn.find("a").text("退出登录");
+            }
+            let liWidth=logoutBtn.siblings('li').innerWidth();
+            logoutBtn.find('a').css("width",liWidth);
+            //console.log(windowWidth,liWidth);
+        }
+
+        //调整头像位置
+        function adjustAvatar() {
+            let $item = $(".user-menu");
+            let $picDiv = $(".user-pic");
+            let distance = $item.offset();
+            let divWidth = $item.width();
+            let toLeft = distance.left;
+            let picDivWidth = $picDiv.width();
+            let allLeftDistance = (divWidth - picDivWidth) / 2 + toLeft;
+            $picDiv.css("left", allLeftDistance);
+            //console.log(allLeftDistance);
+        }
+
+        //菜单选项点击事件
+        function choiceClickBtn() {
+            $(".menu-choice").click(function () {
+                $(this).parent().siblings().removeClass("select");
+                $(this).parent().addClass("select");
+                $(this).css("text-decoration", "none");
+            })
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}
+    新闻表管理
+{% endblock %}
+{% block heading %}
+    新闻表管理
+{% endblock %}
+{% block btn %}
+<a class="btn btn-primary" href="{{ url_for("user.news_edit") }}" target="_blank">添加</a>
+{% endblock %}
+{% block css %}
+    <style>
+        .operation .btn:hover {
+            color: white;
+            cursor: pointer;
+        }
+
+        .division {
+            margin-top: 3px;
+            margin-bottom: 0;
+            border-top: 0;
+            width: 100%;
+        }
+
+        #reason {
+            resize: none;
+            width: 100%;
+            height: auto;
+            min-height: 150px;
+            border: 1px solid #8c8c8c;
+            box-shadow: inset 0 1px 1px #d4d4d4;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        #reason:focus {
+            border: 1px solid #2b669a;
+            resize: vertical;
+            box-shadow: 0 0 1px 0 #2aabd2;
+        }
+
+        .check-list a {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <!-- List group -->
+    <div class="panel panel-default" style="margin-bottom: 10px;">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                <i class="fa fa-search" aria-hidden="true" style="margin-right: 5px;"></i>筛选选项
+            </h3>
+        </div>
+        <div class="panel-body filter-area">
+            {% for row in data.filter %}
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="title">{{ row.title }}</div>
+                        <div class="check-list">
+                            {% for item in row.check_filter %}
+                                {{ item }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>标题</th>
+                <th>分类</th>
+                <th>来源</th>
+                <th>发布时间</th>
+                <th>评论数</th>
+                <th>点击数</th>
+                <th>作者</th>
+                <th>审核状态</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><a class="">{{ obj.title }}</a></td>
+                    <td><a class="">{{ obj.category.name }}</a></td>
+                    <td><a class="">{{ obj.source }}</a></td>
+                    <td><a class="">{{ obj.create_time }}</a></td>
+                    <td><a class="">{{ obj.comments_count }}</a></td>
+                    <td><a class="">{{ obj.clicks }}</a></td>
+                    <td><a class="">{{ obj.author.nick_name }}</a></td>
+                    <td><a class="">{% if obj.status==0 %}审核中{% elif obj.status==1 %}通过{% else %}未通过{% endif %}</a></td>
+                    <td class="operation" data-id="{{ obj.id }}">
+                        <a class="btn btn-info btn-sm" href="{{ url_for("detail.detail",nid=obj.id) }}" target="_blank">查看</a>
+                        <hr class="division">
+                        <a class="btn btn-success btn-sm edit" href="{{ url_for("admin.news_rewrite",news_id=obj.id) }}"
+                           target="_blank">编辑</a>
+                        <hr class="division">
+                        {% if obj.status==1 %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="drawback">撤回审核</a>
+                        {% elif obj.status==0 %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="agree">
+                                批审<i class="fa fa-check" aria-hidden="true"></i>
+                            </a>
+                            <hr class="division">
+                            <a class="btn btn-danger btn-sm clearfix reject" data-type="reject" data-toggle="modal"
+                               data-target="#myModal">
+                                驳回<i class="fa fa-times" aria-hidden="true"></i>
+                            </a>
+                        {% else %}
+                            <a class="btn btn-warning btn-sm clearfix examine" data-type="agree">
+                                批审<i class="fa fa-check" aria-hidden="true"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">驳回原因</h4>
+                </div>
+                <div class="modal-body text-center" style="padding-top: 0;">
+                    <label for="reason"></label>
+                    <textarea id="reason" name="reason" placeholder="请输入原因"></textarea>
+                </div>
+                <div class="modal-footer" data-id="">
+                    <a class="btn btn-default" data-dismiss="modal">取消</a>
+                    <a type="button" class="btn btn-danger examine" data-type="reject">
+                        驳回<i class="fa fa-times" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            examineClick();
+            showReasonDiv();
+            bindClickCheckFilter2();
+        });
+
+        function bindClickCheckFilter2() {
+            $('.filter-area').find(':checkbox').click(function () {
+                location.href = $(this).parent().attr('href');
+            });
+        }
+
+
+        function showReasonDiv() {
+            $(".reject").on("click", function () {
+                let nid = $(this).parent().attr("data-id");
+                $(".modal-footer").attr("data-id", nid);
+            });
+        }
+
+
+        function examineClick() {
+            $('.examine').on('click', function () {
+                let deal_type = $(this).attr("data-type");
+                let nid = $(this).parent().attr("data-id");
+                let getUrl = "{{ url_for("admin.news_verify") }}";
+                let reason = $("#reason").val();
+                let params = {};
+                if (deal_type === "reject") {
+                    params = {"nid": nid, "deal_type": deal_type, "reason": reason};
+                    if (!reason) {
+                        showErrorDiv("输入为空");
+                        return false
+                    }
+                } else {
+                    params = {"nid": nid, "deal_type": deal_type};
+                }
+                //console.log(params);
+                $.ajax({
+                    url: getUrl,
+                    type: "POST",
+                    headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                    data: params,
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            successFunction();
+                        } else {
+                            showErrorDiv(res.error);
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}

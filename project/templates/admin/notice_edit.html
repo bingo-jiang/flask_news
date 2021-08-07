@@ -1,0 +1,190 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}后台管理-首页{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.min.css') }}">
+    <style>
+        body {
+            background: white !important;
+        }
+
+        .admin-index img {
+            width: 200px;
+            height: 200px;
+            border-radius: 100px;
+        }
+
+        .admin-index a {
+            font-size: 32px;
+        }
+
+        .admin-index p {
+            color: white;
+        }
+
+        .edit-main {
+            margin: 0 auto;
+            float: none !important;
+        }
+
+        .edit-btn {
+            max-width: 40%;
+            float: right !important;
+            margin-right: 15px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    {#消息提示框#}
+    <div class="hidden post-success text-center" style="z-index: 99999">
+        <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+    </div>
+    <div class="message-tips hidden" style="z-index: 99999">
+        <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+        <div class="text-center"><span id="msg"></span></div>
+    </div>
+    <div class="edit-main col-lg-9 col-md-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">写作
+                <div style="float: right"><a href="{{ url_for("admin.manage") }}">返回管理中心</a></div>
+                <div class="clearfix"></div>
+            </div>
+            <div class="panel-body">
+                <form id="notice_form" class="form-horizontal">
+                    {% for field in data.form %}
+                        {% if field.name=="csrf_token" %}
+                            <div class="form-group">
+                                <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            </div>
+                        {% elif field.name=="content" %}
+                            <div class="form-group">
+                                <label for="title" class="col-lg-2 control-label">
+                                    {{ field.label }}
+                                </label>
+                                <div class="col-lg-10">
+                                    <div id="md_editor">
+                                        {{ data.form.content }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="form-group">
+                                <label for="title" class="col-lg-2 control-label">
+                                    {{ field.label }}
+                                </label>
+                                <div class="col-lg-10">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="form-group">
+                        <a class="btn btn-primary edit-btn save_notice">发布</a>
+{#                        <a class="btn btn-success edit-btn" data-toggle="modal" data-target="#myModal">预览</a>#}
+                        <div class="clearfix"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/editormd.js') }}"></script>
+    <script>
+        $(function () {
+                initMdEditor();
+                saveNoticeClick();
+        });
+        //保存notice
+        function saveNoticeClick() {
+            $(".save_notice").on("click",function () {
+                let ajaxUrl="{{ url_for("admin.notice_edit") }}";
+                let data=$("#notice_form").serializeArray();
+                myAjax(ajaxUrl,data);
+            })
+        }
+
+        //封装的Ajax请求
+        function myAjax(targetUrl, params) {
+            $.ajax({
+                url: targetUrl,
+                type: "POST",
+                headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                data: params,
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        if (res.data){
+                            location.href=res.data;
+                        } else {
+                            successFunction();
+                        }
+                    } else {
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        }
+
+
+         //初始化编辑器
+        function initMdEditor() {
+            let picUpload = "{{ url_for("user.pic_upload") }}";
+            editormd('md_editor', {
+                placeholder: '请输入内容',
+                height: 600,
+                path: "{{ url_for("static",filename="plugins/md-editor/lib/") }}",
+                imageUpload: true,/*支持本地图片上传*/
+                imageUploadURL: picUpload,/*上传图片的url*/
+                imageFormats: ["jpg", "png", "jpeg", "gif"]/*支持的图片格式*/
+            })
+        }
+
+        //Ajax成功响应后显示成功提示框并刷新
+        function successFunction() {
+            function showSuccess() {
+                let $msgDiv = $(".post-success");
+                $msgDiv.removeClass("hidden");
+                $msgDiv.width();
+                divJustifyCenter($msgDiv, $msgDiv.width());
+                let aTimeOut = setTimeout(function () {
+                    $msgDiv.addClass("hidden");
+                    $msgDiv.css("left", "");
+                    clearTimeout(aTimeOut);
+                }, 1500)
+            }
+
+            showSuccess();
+            let aTimeOut = setTimeout(function () {
+                location.reload();
+                clearTimeout(aTimeOut);
+            }, 2000)
+        }
+
+
+        //显示错误提示框
+        function showErrorDiv(error) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv, $msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 1500)
+        }
+
+        //消息提示框居中
+        function divJustifyCenter($div, divWidth) {
+            let pageWidth = $(window).width();
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+            //console.log(pageWidth,divWidth,toLeft);
+        }
+
+    </script>
+{% endblock %}

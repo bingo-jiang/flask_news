@@ -1,0 +1,117 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}公告表管理{% endblock %}
+
+{% block heading %}公告管理{% endblock %}
+
+{% block btn %}
+    <a class="btn btn-primary add" href="{{ url_for("admin.notice_edit") }}" target="_parent">添加</a>
+{% endblock %}
+
+{% block content %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>发布时间</th>
+                <th>更新时间</th>
+                <th>发布者</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><p class="">{{ obj.id }}</p></td>
+                    <td class="notice-title">{{ obj.title }}</td>
+                    <td>{{ obj.create_time }}</td>
+                    <td>{{ obj.update_time }}</td>
+                    <td>{{ obj.admin.nick_name }}</td>
+                    <td class="operation" data-id="{{ obj.id }}" data-content="{{ obj.content }}">
+                        <a class="btn btn-info btn-sm" href="{{ url_for("nc.notice_scan",nid=obj.id) }}" target="_blank">
+                            查看
+                        </a>
+                        <hr class="division">
+                        <a class="btn btn-success btn-sm" href="{{ url_for("admin.notice_edit") }}?nid={{ obj.id }}" target="_parent">
+                            编辑
+                        </a>
+                        <hr class="division">
+                        <a class="btn btn-danger btn-sm" data-id="{{ obj.id }}"
+                           data-toggle="modal" data-target="#deleteModal">删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% endblock %}
+{% block css %}
+    <style>
+        .operation .btn {
+            max-width: 100px;
+        }
+
+        .operation .btn:hover {
+            color: white;
+            cursor: pointer;
+        }
+
+        .division {
+            margin-top: 3px;
+            margin-bottom: 0;
+            border-top: 0;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            deleteNotice();
+        });
+
+        function myPostAjax(targetUrl, params) {
+            $.ajax({
+                url: targetUrl,
+                type: "POST",
+                headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                data: params,
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        successFunction();
+                    } else {
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        }
+
+        function deleteNotice() {
+            $("#deleteBtn").on("click", function () {
+                let deal_type = $(this).attr("data-type");
+                let nid = $(this).attr("data-id");
+                let ajaxParams = {};
+                let ajaxUrl = "{{ url_for("admin.manage_notice") }}";
+                if (!deal_type || !nid) {
+                    showErrorDiv("输入为空");
+                    return false
+                }
+                ajaxParams = {"nid": nid, "deal_type": deal_type};
+                myPostAjax(ajaxUrl, ajaxParams);
+            })
+        }
+    </script>
+{% endblock %}
+
+

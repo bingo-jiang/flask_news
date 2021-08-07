@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>关注</title>
+    <link rel="stylesheet" href="{{ url_for("static",filename="plugins/bootstrap/css/bootstrap.css") }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script href="{{ url_for("static",filename="plugins/bootstrap/js/bootstrap.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user.css") }}">
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user_collections.css") }}">
+    <style>
+        .page-div {
+            display: flex;
+            justify-content: center;
+            flex-direction: row
+        }
+    </style>
+</head>
+<body>
+{#消息提示框#}
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{#关注展示#}
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <p>关注<span class="full-screen" data-type="open"><i class="fa fa-arrows-alt" aria-hidden="true"></i></span></p>
+    </div>
+    <!-- List group -->
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>昵称</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.followers_list %}
+                <tr>
+                    <td><a class="float_left" target="_parent">{{ obj.nick_name }}</a></td>
+                    <td class="danger text-center cancel-follow" data-id="{{ obj.id }}">
+                        <a class="">取消关注</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div class="page-div">
+        <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+            <ul class="pagination">
+                {% if data.page_html %}
+                    {{ data.page_html|safe }}
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+</body>
+<script>
+    $(function () {
+        largeIframeWindow();
+        deleteIdols();
+        initGetError();
+        windowBind();
+    });
+
+
+    //window变化监控
+    function windowBind() {
+        $(window).resize(function () {
+
+        });
+    }
+
+    //初始化get请求错误
+    function initGetError() {
+        let error = "{{ data.error }}";
+        if (error) {
+            showErrorDiv(error);
+        }
+    }
+
+    //信息修改接口
+    function deleteIdols() {
+        $(".cancel-follow").on("click", function () {
+            const postUrl = "{{ url_for("user.my_idols") }}";
+            let authorId = $(this).attr("data-id");
+            let params = {"author_id": authorId};
+            $.ajax({
+                url: postUrl,
+                data: params,
+                type: 'POST',
+                headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {//成功
+                        location.reload()
+                    } else {//失败
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        });
+    }
+
+    //显示错误提示框
+    function showErrorDiv(error) {
+        let $msgDiv = $(".message-tips");
+        $msgDiv.removeClass("hidden");
+        $("#msg").text(error);
+        $msgDiv.width();
+        divJustifyCenter($msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $("#msg").empty();
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //错误提示框居中
+    function divJustifyCenter(divWidth) {
+        let pageWidth = $(window).width();
+        let $div = $(".message-tips");
+        let toLeft = (pageWidth - divWidth) / 2;
+        $div.css("left", toLeft);
+        //console.log(pageWidth,divWidth,toLeft);
+    }
+
+
+    //调整左边栏头像位置
+    function adjustAvatar(parentWindow) {
+        let $item = parentWindow.find(".user-menu");
+        let $picDiv = parentWindow.find(".user-pic");
+        let distance = $item.offset();
+        let divWidth = $item.width();
+        let toLeft = distance.left;
+        let picDivWidth = $picDiv.width();
+        let allLeftDistance = (divWidth - picDivWidth) / 2 + toLeft;
+        $picDiv.css("left", allLeftDistance);
+        //console.log(allLeftDistance);
+    }
+
+    //放大iframe窗口
+    function largeIframeWindow() {
+        let $item = $(".full-screen");
+        let parentWindow = $(window.parent.document);
+        $item.on("click", function () {
+            let dealType = $item.attr("data-type");
+            if (dealType === "close") {
+                $item.attr("data-type", "open");
+                parentWindow.find(".user-menu").removeClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-8 col-sm-8 col-md-9 col-lg-9"
+                ).removeClass("col-xs-12 col-sm-12 col-md-12 col-lg-12");
+                adjustAvatar(parentWindow)
+            }
+            if (dealType === "open") {
+                $item.attr("data-type", "close");
+                parentWindow.find(".user-menu").addClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-12 col-sm-12 col-md-12 col-lg-12"
+                ).removeClass("col-xs-8 col-sm-8 col-md-9 col-lg-9");
+                adjustAvatar(parentWindow);
+            }
+        });
+        $item.hover(function () {
+            $item.css("font-size", "24px")
+        }, function () {
+            $item.css("font-size", "20px")
+        })
+    }
+</script>
+</html>

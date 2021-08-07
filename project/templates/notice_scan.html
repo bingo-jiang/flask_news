@@ -1,0 +1,401 @@
+{% extends 'detail_base.html' %}
+{% block title %}
+    {{ data.notice_obj.title }}-佳猫新闻
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.preview.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/detail.css',_external=True) }}">
+    <style>
+        .fa-quote-left {
+            position: absolute;
+            left: 3px;
+            top: 3px;
+        }
+
+        .fa-quote-right {
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+        }
+
+        .author-identification {
+            border: 1px solid red;
+            border-radius: 5px;
+            width: 100px;
+            margin-right: 15px;
+        }
+
+        .follow {
+            width: 100px;
+            border-radius: 5px;
+            margin-right: 15px;
+            background: #2b669a;
+        }
+
+        .follow a {
+            width: 100px;
+            font-size: 20px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .author-name {
+                text-align: center;
+            }
+
+            #reply-who {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+{% endblock %}
+{% block main %}
+    <div class="container-fluid" style="">
+        <div class="col-lg-3 hidden-sm hidden-xs">
+            <div class="panel panel-info">
+                <div class="panel-heading" style="text-align: center;">推荐阅读TOP10</div>
+                <ul class="list-group" id="hot_news">
+                    {% for new_obj in data.suggestions %}
+                        <li class="list-group-item">
+                            <div class="{{ loop.index | my_tag }}" style="display: inline">{{ loop.index }}</div>
+                            <div style="display: inline">
+                                <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">{{ new_obj.title }}</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="notice-container col-lg-6 container-fluid">
+            <div class="panel panel-info">
+                <div class="panel-body">
+                    <div><h2>{{ data.notice_obj.title }}</h2></div>
+                    <div class="author-container">
+                        <p>发布者：<span style="font-size: 18px;">{{ data.notice_obj.admin.nick_name }}</span></p>
+                    </div>
+                    <div class="introduction bottom-10px">
+                        <p class="mini-show">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i>
+                            发布时间:{{ data.notice_obj.create_time }}
+                            <span style="margin-left: 10px;">最近更新:{{ data.notice_obj.update_time }}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <hr class="division">
+                    </div>
+                    <div class="news-content bottom-10px" id="preview-markdown">
+                        <label for="wiki-content"></label><textarea
+                            id="wiki-content">{{ data.notice_obj.content |safe }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 hidden-sm hidden-xs">
+            <div class="panel panel-info">
+                <div class="panel-heading" style="text-align: center;">热门新闻TOP10</div>
+                <ul class="list-group" id="hot_news">
+                    {% for new_obj in data.hot_news %}
+                        <li class="list-group-item">
+                            <div class="{{ loop.index | my_tag }}" style="display: inline">{{ loop.index }}</div>
+                            <div style="display: inline">
+                                <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">{{ new_obj.title }}</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/editormd.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/jquery.flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/marked.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/prettify.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/raphael.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/sequence-diagram.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/underscore.min.js') }}"></script>
+    <script>
+        //全局变量
+        let replyMsg = null;
+        //主函数入口
+        $(function () {
+            addSymbol();
+            collectBtn();
+            commentBtn();
+            focusBtn();
+            replyBtn();
+            cancelReplyBtn();
+            upClickBtn();
+            attentionAuthor();
+            scrollToParent();
+            initPreviewMdEditor();
+        });
+
+        /*初始化预览md编辑器*/
+        function initPreviewMdEditor() {
+            editormd.markdownToHTML('preview-markdown', {
+                htmlDecode: "script,iframe,style",
+            })
+        }
+
+        //摘要前后添加特殊符号
+        function addSymbol() {
+            let $target = $(".news-digest span");
+            $target.before('<i class="fa fa-quote-left" aria-hidden="true"></i>');
+            $target.after('<i class="fa fa-quote-right" aria-hidden="true"></i>');
+        }
+
+        //获取csrf_token
+        function getCookie(name) {
+            let r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+            return r ? r[1] : undefined;
+        }
+
+        //收藏接口
+        function collectBtn() {
+            $(".store_btn").click(function (e) {
+                const nid = $(this).attr("data-id");
+                const deal_type = $(this).attr("data-type");
+                const collectUrl = "{{ url_for("detail.collect") }}";
+                const params = {"nid": nid, "user_id": "{{ request.user.id }}", "deal_type": deal_type};
+                $.ajax({
+                    url: collectUrl,
+                    type: "POST",
+                    data: params,
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            if (res.login) {
+                                location.href = res.login;
+                            }
+                            $("#collect-error").text(res.error);
+                            let aTimeOut = setTimeout(function () {
+                                $("#collect-error").empty();
+                                clearTimeout(aTimeOut);
+                            }, 5000)
+                        }
+                    }
+                })
+            })
+        }
+
+        //评论接口
+        function commentBtn() {
+            $(".comment_btn").click(function (e) {
+                const nid = $(this).attr("data-id");
+                const pid = $(this).attr("parent_id");
+                const content = $(this).parent().parent().find("textarea").val();
+                const commentUrl = "{{ url_for("detail.comment") }}";
+                let params = {"nid": nid, "user_id": "{{ request.user.id }}", "parent_id": pid, "content": content};
+                $.ajax({
+                    url: commentUrl,
+                    type: "POST",
+                    data: params,
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            //console.log(res.error);
+                            $("#comment-error").text(res.error);
+                            let aTimeOut = setTimeout(function () {
+                                $("#comment-error").empty();
+                                clearTimeout(aTimeOut);
+                            }, 5000)
+                        }
+                    }
+                })
+            })
+        }
+
+        //按钮的鼠标移进移出事件
+        function focusBtn() {
+            $("#cancel_collect").hover(function () {
+                const $icoStar = $('#star');
+                $icoStar.addClass("fa-star-o");
+                $icoStar.removeClass("fa-star");
+                $(this).find("span").text("取消收藏");
+            }, function () {
+                const $icoStar = $('#star');
+                $icoStar.addClass("fa-star");
+                $icoStar.removeClass("fa-star-o");
+                $(this).find("span").text("已收藏");
+            });
+            $("#reply-who").hover(function () {
+                    $(this).find("span").text("取消回复");
+                },
+                function () {
+                    $(this).find("span").text(replyMsg);
+                });
+
+            function followDivHoverIn() {
+                let $followDiv = $(".follow-container a");
+                let dataType = $followDiv.attr("data-type");
+                $followDiv.find('i').addClass("hidden");
+                if (dataType === "cancel") {
+                    $followDiv.find('span').text("取消关注");
+                } else {
+                    $followDiv.find('span').text("添加关注");
+                }
+            }
+
+            function followDivHoverOut() {
+                let $followDiv = $(".follow-container a");
+                let dataType = $followDiv.attr("data-type");
+                $followDiv.find('i').removeClass("hidden");
+                if (dataType === "cancel") {
+                    $followDiv.find('span').text("已关注");
+                } else {
+                    $followDiv.find('span').text("关注");
+                }
+            }
+
+            $(".follow-container").hover(function () {
+                followDivHoverIn()
+            }, function () {
+                followDivHoverOut()
+            });
+        }
+
+        //回到评论框位置
+        function backToComment() {
+            $('html , body').animate({scrollTop: $('.comment-container').offset().top}, 1000);
+        }
+
+        //回复按钮事件
+        function replyBtn() {
+            $(".reply-btn").click(function () {
+                let login_id = "{{ request.user.id }}";
+                if (!parseInt(login_id)) {
+                    showErrorDiv("请登录");
+                    return false
+                }
+                let news_id = $(this).attr("data-id");
+                let user_name = $(this).attr("data-name");
+                let $reply = $("#reply-who");
+                $reply.find("span").text("@" + user_name);
+                $reply.removeClass("hidden");
+                replyMsg = $reply.find("span").text();
+                $(".comment_btn").attr("parent_id", news_id);
+                backToComment();
+            })
+        }
+
+        //取消回复评论
+        function cancelReplyBtn() {
+            $("#reply-who").click(function () {
+                let $reply = $("#reply-who");
+                $reply.find("span").empty();
+                $reply.addClass("hidden");
+                $(".comment_btn").removeAttr("parent_id");
+            })
+        }
+
+        //父评论滚动事件
+        function scrollToParent() {
+            $(".comment-parent").on("click", function () {
+                let parent_id = $(this).attr("data-cid");
+                let $target = $('#comment-' + parent_id);
+                let offsetTop = $target.offset().top;
+                let targetHeight = $target.height();
+                let pageHeight = $(window).height();
+                let scrollTop = offsetTop - (pageHeight - targetHeight) / 2;
+                console.log(offsetTop, targetHeight, pageHeight, scrollTop);
+                $('html , body').animate({scrollTop: scrollTop}, 1000, function () {
+                    $target.css("border", "1px solid red");
+                    $target.css("border-radius", "5px");
+                    let aTimeOut = setTimeout(function () {
+                        $target.css("border", "none");
+                        $target.css("border-radius", "none");
+                        clearTimeout(aTimeOut);
+                    }, 5000)
+                });
+            });
+        }
+
+        //点赞事件
+        function upClickBtn() {
+            const upUrl = "{{ url_for("detail.praise") }}";
+            $(".praise-btn").click(function () {
+                let comment_id = $(this).attr("data-comment-id");
+                let action = $(this).attr("data-action");
+                let params = {"comment_id": comment_id, "action": action};
+                $.ajax({
+                    url: upUrl,
+                    type: 'post',
+                    data: JSON.stringify(params),
+                    contentType: 'application/json',
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            if (res.login) {
+                                location.href = res.login;
+                            } else {
+                                showErrorDiv(res);
+                            }
+                        }
+                    }
+                })
+            })
+        }
+
+        //显示错误提示框
+        function showErrorDiv(error) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 2000)
+        }
+
+        //错误提示框居中
+        function divJustifyCenter(divWidth) {
+            let pageWidth = $(window).width();
+            let $div = $(".message-tips");
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+            //console.log(pageWidth,divWidth,toLeft);
+        }
+
+        //关注作者
+        function attentionAuthor() {
+            const postUrl = "{{ url_for("detail.follow") }}";
+            $(".follow-container").on('click', function () {
+                let followed_id = $(this).find('a').attr("data-id");
+                let deal_type = $(this).find('a').attr("data-type");
+                let params = {"followed_id": followed_id, "deal_type": deal_type};
+                console.log(params);
+                $.ajax({
+                    url: postUrl,
+                    type: 'post',
+                    data: JSON.stringify(params),
+                    contentType: 'application/json',
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            showErrorDiv(res);
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}

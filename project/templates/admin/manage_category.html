@@ -1,0 +1,181 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}新闻表管理{% endblock %}
+
+{% block heading %}新闻表管理{% endblock %}
+
+{% block btn %}
+    <a class="btn btn-primary add" data-toggle="modal" data-target="#myModal" data-type="add">添加</a>
+{% endblock %}
+
+{% block content %}
+    <div class="panel panel-default" style="margin-bottom: 10px;">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                <i class="fa fa-search" aria-hidden="true" style="margin-right: 5px;"></i>筛选选项
+            </h3>
+        </div>
+        <div class="panel-body filter-area">
+            {% for row in data.filter %}
+                <div class="text-center">
+                    <div class="title">{{ row.title }}</div>
+                    <div class="check-list">
+                        {% for item in row.check_filter %}
+                            {{ item }}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>分类</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
+                <th>使用状态</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><a class="">{{ obj.name }}</a></td>
+                    <td><a class="">{{ obj.create_time }}</a></td>
+                    <td><a class="">{{ obj.update_time }}</a></td>
+                    <td><a class="">
+                        {% if obj.status %}
+                            <p style="color: #2b669a;">使用中<i class="fa fa-check" aria-hidden="true"></i></p>
+                        {% else %}
+                            <p style="color: red;">禁用<i class="fa fa-ban" aria-hidden="true"></i></p>
+                        {% endif %}</a></td>
+                    <td class="operation" data-id="{{ obj.id }}" data-name="{{ obj.name }}">
+                        <a class="btn btn-success btn-sm edit" data-toggle="modal" data-target="#myModal">编辑</a>
+                        <hr class="division">
+                        <a class="btn btn-warning btn-sm edit-btn" data-type="delete">禁用/使用</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">分类名称</h4>
+                </div>
+                <div class="modal-body form-group" style="padding-top: 0;">
+                    <label for="name">名称</label>
+                    <input type="text" id="name" class="form-control" autocomplete="off" value="">
+                </div>
+                <div class="modal-footer" data-id="" data-name="">
+                    <a class="btn btn-default" data-dismiss="modal">取消</a>
+                    <a type="button" class="btn btn-danger edit-btn" data-type="edit">确定</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block css %}
+    <style>
+        .operation .btn {
+            max-width: 100px;
+        }
+
+        .operation .btn:hover {
+            color: white;
+            cursor: pointer;
+        }
+
+        .division {
+            margin-top: 3px;
+            margin-bottom: 0;
+            border-top: 0;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            showEditModal();
+            categoryEdit();
+        });
+
+        function showEditModal() {
+            $(".edit").on("click", function () {
+                let cid = $(this).parent().attr("data-id");
+                let name = $(this).parent().attr("data-name");
+                $(".modal-footer").attr({"data-id": cid, "data-name": name});
+                $("#name").attr("value", name);
+            });
+            $(".add").on("click", function () {
+                let deal_type = $(this).attr("data-type");
+                $(".edit-btn").attr("data-type", deal_type);
+            });
+        }
+
+        function categoryEdit() {
+            $('.edit-btn').on('click', function () {
+                let deal_type = $(this).attr("data-type");
+                let cid = $(this).parent().attr("data-id");
+                let oldName = $(this).parent().attr("data-name");
+                let getUrl = "{{ url_for("admin.news_category") }}";
+                let name = $("#name").val();
+                let params = {};
+                if (deal_type === "add") {
+                    if (!name) {
+                        showErrorDiv("输入为空");
+                        return false
+                    }
+                    params = {"deal_type": deal_type, "name": name};
+                }
+                if (deal_type === "edit") {
+                    if (name === "oldName") {
+                        showErrorDiv("名称没有改动");
+                        return false
+                    }
+                    if (!name) {
+                        showErrorDiv("输入为空");
+                        return false
+                    }
+                    params = {"cid": cid, "deal_type": deal_type, "name": name};
+                }
+                if (deal_type === "delete") {
+                    params = {"cid": cid, "deal_type": deal_type, "name": oldName};
+                }
+                console.log(params);
+                $.ajax({
+                    url: getUrl,
+                    type: "POST",
+                    headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+                    data: params,
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            successFunction();
+                        } else {
+                            showErrorDiv(res.error);
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}
+
+

@@ -1,0 +1,43 @@
+@media (max-width: 480px) {
+    #login-div {
+        width: auto;
+    }
+
+    #code-div {
+        max-width: 165px;
+        margin-top: 5px;
+    }
+
+    .register-to-login a:hover {
+        text-decoration: none;
+    }
+}
+
+@media (min-width: 481px) {
+    #login-div {
+        width: 80%;
+    }
+
+    #code-div {
+        max-width: 165px;
+        margin-top: 5px;
+    }
+
+    .register-to-login a:hover {
+        text-decoration: none;
+    }
+}
+
+@media (min-width: 991px) {
+    #login-div {
+        width: 25%;
+    }
+
+    #code-div {
+        max-width: 165px;
+    }
+
+    .register-to-login a:hover {
+        text-decoration: none;
+    }
+}

@@ -1,0 +1,578 @@
+{% extends 'detail_base.html' %}
+{% block title %}
+    {{ data.news_obj.title }}-佳猫新闻
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for("static",filename= 'plugins/md-editor/css/editormd.preview.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/detail.css',_external=True) }}">
+    <style>
+        .fa-quote-left {
+            position: absolute;
+            left: 3px;
+            top: 3px;
+        }
+
+        .fa-quote-right {
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+        }
+
+        .author-identification {
+            border: 1px solid red;
+            border-radius: 5px;
+            width: 100px;
+            margin-right: 15px;
+        }
+
+        .follow {
+            width: 100px;
+            border-radius: 5px;
+            margin-right: 15px;
+            background: #2b669a;
+        }
+
+        .follow a {
+            width: 100px;
+            font-size: 20px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .author-name {
+                text-align: center;
+            }
+
+            #reply-who {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="panel panel-info">
+        <div class="panel-body">
+            <div><h2>{{ data.news_obj.title }}</h2></div>
+            <div class="author-container">
+                <a class="font-15px" data-toggle="modal" data-target="#myModal">
+                    作者：<span style="font-size: 18px;">{{ data.news_obj.author.nick_name }}</span>
+                </a>
+                <!-- Modal -->
+                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="panel panel-primary" style="border: none !important;box-shadow: none;">
+                                <div class="panel-heading"><p style="font-size: 18px;">作者简介</p></div>
+                                <div class="panel-body" style="padding: 15px;border: none !important;box-shadow: none;">
+                                    <div class="row bottom-10px">
+                                        <div class="col-md-6 col-lg-6 text-center">
+                                            <a href="{{ data.news_obj.author.avatar_url }}">
+                                                <img class="img-circle" src="{{ data.news_obj.author.avatar_url }}"
+                                                     alt="{{ data.news_obj.author.id }}"
+                                                     style="width: 130px;height: 130px;">
+                                            </a>
+                                        </div>
+                                        <div class="vertical col-md-6 col-lg-6 text-center">
+                                            <span style="font-size: 20px;line-height: 100px;">{{ data.news_obj.author.nick_name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row bottom-10px font-15px">
+                                        <p>个性签名：{{ data.news_obj.author.signature }}</p>
+                                    </div>
+                                    <div class="row">
+                                        <div class="float_left" style="margin-left: 18px;">
+                                            文章<br><span id="news_count">{{ data.news_obj.author.news_count }}</span>篇
+                                        </div>
+                                        <div class="float_left" style="margin-left: 18px;">
+                                            粉丝<br><span
+                                                id="followers_count">{{ data.news_obj.author.followers_count }}</span>人
+                                        </div>
+                                        {% if request.user==data.news_obj.author %}
+                                            <div class="float_right text-center author-identification">
+                                                <p style="color: red;font-size: 16px;margin: auto auto;">
+                                                    <i class="fa fa-user" aria-hidden="true"></i>作者<br>
+                                                    已认证<i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                                                </p>
+                                            </div>
+                                        {% elif data.is_follow %}
+                                            <div class="float_right follow text-center follow-container">
+                                                <a data-id="{{ data.news_obj.author.id }}" id="attention_btn"
+                                                   data-type="cancel">
+                                                    <span id="is_attention">已关注</span>
+                                                    <i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <div class="float_right attention text-center follow-container">
+                                                <a data-id="{{ data.news_obj.author.id }}" id="attention_btn"
+                                                   data-type="follow">
+                                                    <i class="fa fa-plus" aria-hidden="true"></i><span
+                                                        id="is_attention">关注</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a class="btn btn-success" data-dismiss="modal">关闭</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="introduction bottom-10px">
+                <span class="mini-show right-10px float_left">
+                    <i class="fa fa-clock-o" aria-hidden="true"></i>{{ data.news_obj.create_time }}
+                </span>
+                <span class="mini-show right-10px float_left">来源：{{ data.news_obj.source }}</span>
+                <span class="mini-show float_right">
+                    <i class="fa fa-commenting-o" aria-hidden="true"></i>{{ data.news_obj.comments_count }}
+                </span>
+            </div>
+            <div>
+                <hr class="division">
+            </div>
+            <div class="news-digest bottom-10px"><span>{{ data.news_obj.digest |safe }}</span></div>
+            <div class="news-content bottom-10px" id="preview-markdown">
+                <label for="wiki-content"></label><textarea id="wiki-content">{{ data.news_obj.content |safe }}</textarea>
+            </div>
+            <div class="text-center top-10px bottom-10px">
+                {% if not data.is_collected %}
+                    <a class="store_btn" data-id="{{ data.news_obj.id }}" data-type="collecting">
+                        <i class="fa fa-star-o" aria-hidden="true"></i>收藏
+                    </a>
+                {% else %}
+                    <a id="cancel_collect" class="store_btn" data-id="{{ data.news_obj.id }}" data-type="collected">
+                        <i id="star" class="fa fa-star" aria-hidden="true" style="color: #2b669a"></i><span>已收藏</span>
+                    </a>
+                {% endif %}
+            </div>
+            <div id="collect-error" style="min-height: 14px;"></div>
+            {% if not request.user %}
+                <div class="comment-to-login">
+                    <a class="font-15px form-control" href="{{ url_for("ac.login") }}">登录后发表评论</a>
+                </div>
+            {% else %}
+                <div class="comment-container container-fluid" style="padding: 0;">
+                    <div class="col-md-1 col-xs-2 col-lg-1 col-sm-1 top-10px picture" style="padding: 5px;">
+                        <img src="{{ url_for('static',filename='images/longing.jpeg') }}" alt="欢迎参与评论" id="longing">
+                    </div>
+                    <div class="col-md-11 col-xs-10 col-lg-11 col-sm-11 text-center" id="text-div">
+                        <label for="comment_textarea"></label>
+                        <textarea name="comment" id="comment_textarea" placeholder="请发表你的评论"></textarea>
+                    </div>
+                    <div id="comment-error" class="col-xs-12"></div>
+                    <div class="row left-10" style="margin-right:10px">
+                        <a id="reply-who" class="btn btn-danger pull-left bottom-10px hidden" style="margin-left: 10px">
+                            <span></span>
+                            <i class="fa fa-times" aria-hidden="true" style="margin-left: 5px;"></i>
+                        </a>
+                        <a data-id="{{ data.news_obj.id }}"
+                           class="comment_btn btn btn-primary pull-right right-15px bottom-10px">
+                            评论
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="all-comments top-20px">
+                <div><span class="float_left font-15px">{{ data.news_obj.comments_count }}条评论</span></div>
+                <div>
+                    <hr class="division">
+                </div>
+                <div class="comments container-fluid" style="padding: 8px;">
+                    {% for comment in data.comments %}
+                        <div class="comments-group container-fluid padding-0" id="comment-{{ comment.id }}">
+                            <div class="col-md-1 col-xs-2 col-lg-1 col-sm-1 top-10px picture" style="padding: 5px;">
+                                <img src="{{ comment.user.avatar_url }}" alt="{{ comment.user.id }}" class="avatar">
+                            </div>
+                            <div class="col-md-11 col-xs-10 col-lg-11 col-sm-11 bottom-10px">
+                                <div class="row top-20px">
+                                    <span class="float_left">用户:{{ comment.user.nick_name }}</span>
+                                </div>
+                                <div class="row top-20px"><p>{{ comment.content }}</p></div>
+                                {% if comment.parent %}
+                                    <div class="row comment-parent" data-cid="{{ comment.parent.id }}">
+                                        <p style="margin: 0;">
+                                            回复 @{{ comment.parent.user.nick_name }}:{{ comment.parent.content }}
+                                        </p>
+                                    </div>
+                                {% endif %}
+                                <div class="row summary top-10px">
+                                    <span class="float_left">{{ comment.create_time }}</span>
+                                    <span class="float_right">
+                                        {% if comment.is_praise %}
+                                            <a class="praise-btn" data-comment-id="{{ comment.id }}" data-action="del">
+                                            <i class="fa fa-thumbs-up" aria-hidden="true"></i>
+                                            赞({{ comment.like_count }})
+                                            </a>
+                                        {% else %}
+                                            <a class="praise-btn" data-comment-id="{{ comment.id }}" data-action="add">
+                                            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                                            赞({{ comment.like_count }})
+                                            </a>
+                                        {% endif %}
+                                    </span>
+                                    <span class="float_right right-15px">
+                                        <a class="reply-btn" data-id="{{ comment.id }}"
+                                           data-name="{{ comment.user.nick_name }}">
+                                            <i class="fa fa-reply" aria-hidden="true"></i>回复
+                                        </a>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <hr class="division">
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="message-tips hidden">
+        <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+        <div class="text-center"><span id="msg"></span></div>
+    </div>
+{% endblock %}
+{% block author %}
+    <div class="panel panel-success">
+        <div class="panel-heading text-center"><p class="font-15px">作者简介</p></div>
+        <div class="panel-body" style="padding: 15px;">
+            <div class="row bottom-10px">
+                <div class="col-md-6 col-lg-6 text-center">
+                    <a href="{{ data.news_obj.author.avatar_url }}">
+                        <img class="img-circle" src="{{ data.news_obj.author.avatar_url }}"
+                             alt="{{ data.news_obj.author.id }}" style="width: 130px;height: 130px;">
+                    </a>
+                </div>
+                <div class="vertical col-md-6 col-lg-6 author-name">
+                    <span style="font-size: 20px;line-height: 100px;">{{ data.news_obj.author.nick_name }}</span>
+                </div>
+            </div>
+            <div class="row bottom-10px font-15px">
+                <p>个性签名：{{ data.news_obj.author.signature }}</p>
+            </div>
+            <div class="row">
+                <div class="float_left" style="margin-left: 18px;">
+                    文章<br><span id="news_count">{{ data.news_obj.author.news_count }}</span>篇
+                </div>
+                <div class="float_left" style="margin-left: 18px;">
+                    粉丝<br><span id="followers_count">{{ data.news_obj.author.followers_count }}</span>人
+                </div>
+                {% if request.user.id==data.news_obj.author.id %}
+                    <div class="float_right text-center author-identification">
+                        <p style="color: red;font-size: 16px;margin: auto auto;">
+                            <i class="fa fa-user" aria-hidden="true"></i>作者<br>
+                            已认证<i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                        </p>
+                    </div>
+                {% elif data.is_follow %}
+                    <div class="float_right follow text-center follow-container">
+                        <a data-id="{{ data.news_obj.author.id }}" id="attention_btn" data-type="cancel">
+                            <span id="is_attention">已关注</span>
+                            <i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="float_right attention text-center follow-container">
+                        <a data-id="{{ data.news_obj.author.id }}" id="attention_btn" data-type="follow">
+                            <i class="fa fa-plus" aria-hidden="true"></i><span id="is_attention">关注</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/editormd.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/jquery.flowchart.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/marked.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/prettify.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/raphael.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/sequence-diagram.min.js') }}"></script>
+    <script src="{{ url_for("static",filename= 'plugins/md-editor/lib/underscore.min.js') }}"></script>
+    <script>
+        //全局变量
+        let replyMsg = null;
+        //主函数入口
+        $(function () {
+            addSymbol();
+            collectBtn();
+            commentBtn();
+            focusBtn();
+            replyBtn();
+            cancelReplyBtn();
+            upClickBtn();
+            attentionAuthor();
+            scrollToParent();
+            initPreviewMdEditor();
+        });
+
+        /*初始化预览md编辑器*/
+        function initPreviewMdEditor() {
+            editormd.markdownToHTML('preview-markdown', {
+                htmlDecode: "script,iframe,style",
+            })
+        }
+
+        //摘要前后添加特殊符号
+        function addSymbol() {
+            let $target = $(".news-digest span");
+            $target.before('<i class="fa fa-quote-left" aria-hidden="true"></i>');
+            $target.after('<i class="fa fa-quote-right" aria-hidden="true"></i>');
+        }
+
+        //获取csrf_token
+        function getCookie(name) {
+            let r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+            return r ? r[1] : undefined;
+        }
+
+        //收藏接口
+        function collectBtn() {
+            $(".store_btn").click(function (e) {
+                const nid = $(this).attr("data-id");
+                const deal_type = $(this).attr("data-type");
+                const collectUrl = "{{ url_for("detail.collect") }}";
+                const params = {"nid": nid, "user_id": "{{ request.user.id }}", "deal_type": deal_type};
+                $.ajax({
+                    url: collectUrl,
+                    type: "POST",
+                    data: params,
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            if (res.login) {
+                                location.href = res.login;
+                            }
+                            $("#collect-error").text(res.error);
+                            let aTimeOut = setTimeout(function () {
+                                $("#collect-error").empty();
+                                clearTimeout(aTimeOut);
+                            }, 5000)
+                        }
+                    }
+                })
+            })
+        }
+
+        //评论接口
+        function commentBtn() {
+            $(".comment_btn").click(function (e) {
+                const nid = $(this).attr("data-id");
+                const pid = $(this).attr("parent_id");
+                const content = $(this).parent().parent().find("textarea").val();
+                const commentUrl = "{{ url_for("detail.comment") }}";
+                let params = {"nid": nid, "user_id": "{{ request.user.id }}", "parent_id": pid, "content": content};
+                $.ajax({
+                    url: commentUrl,
+                    type: "POST",
+                    data: params,
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            //console.log(res.error);
+                            $("#comment-error").text(res.error);
+                            let aTimeOut = setTimeout(function () {
+                                $("#comment-error").empty();
+                                clearTimeout(aTimeOut);
+                            }, 5000)
+                        }
+                    }
+                })
+            })
+        }
+
+        //按钮的鼠标移进移出事件
+        function focusBtn() {
+            $("#cancel_collect").hover(function () {
+                const $icoStar = $('#star');
+                $icoStar.addClass("fa-star-o");
+                $icoStar.removeClass("fa-star");
+                $(this).find("span").text("取消收藏");
+            }, function () {
+                const $icoStar = $('#star');
+                $icoStar.addClass("fa-star");
+                $icoStar.removeClass("fa-star-o");
+                $(this).find("span").text("已收藏");
+            });
+            $("#reply-who").hover(function () {
+                    $(this).find("span").text("取消回复");
+                },
+                function () {
+                    $(this).find("span").text(replyMsg);
+                });
+
+            function followDivHoverIn() {
+                let $followDiv = $(".follow-container a");
+                let dataType = $followDiv.attr("data-type");
+                $followDiv.find('i').addClass("hidden");
+                if (dataType === "cancel") {
+                    $followDiv.find('span').text("取消关注");
+                } else {
+                    $followDiv.find('span').text("添加关注");
+                }
+            }
+
+            function followDivHoverOut() {
+                let $followDiv = $(".follow-container a");
+                let dataType = $followDiv.attr("data-type");
+                $followDiv.find('i').removeClass("hidden");
+                if (dataType === "cancel") {
+                    $followDiv.find('span').text("已关注");
+                } else {
+                    $followDiv.find('span').text("关注");
+                }
+            }
+
+            $(".follow-container").hover(function () {
+                followDivHoverIn()
+            }, function () {
+                followDivHoverOut()
+            });
+        }
+
+        //回到评论框位置
+        function backToComment() {
+            $('html , body').animate({scrollTop: $('.comment-container').offset().top}, 1000);
+        }
+
+        //回复按钮事件
+        function replyBtn() {
+            $(".reply-btn").click(function () {
+                let login_id = "{{ request.user.id }}";
+                if (!parseInt(login_id)) {
+                    showErrorDiv("请登录");
+                    return false
+                }
+                let news_id = $(this).attr("data-id");
+                let user_name = $(this).attr("data-name");
+                let $reply = $("#reply-who");
+                $reply.find("span").text("@" + user_name);
+                $reply.removeClass("hidden");
+                replyMsg = $reply.find("span").text();
+                $(".comment_btn").attr("parent_id", news_id);
+                backToComment();
+            })
+        }
+
+        //取消回复评论
+        function cancelReplyBtn() {
+            $("#reply-who").click(function () {
+                let $reply = $("#reply-who");
+                $reply.find("span").empty();
+                $reply.addClass("hidden");
+                $(".comment_btn").removeAttr("parent_id");
+            })
+        }
+
+        //父评论滚动事件
+        function scrollToParent() {
+            $(".comment-parent").on("click", function () {
+                let parent_id = $(this).attr("data-cid");
+                let $target = $('#comment-' + parent_id);
+                let offsetTop = $target.offset().top;
+                let targetHeight = $target.height();
+                let pageHeight = $(window).height();
+                let scrollTop = offsetTop - (pageHeight - targetHeight) / 2;
+                console.log(offsetTop, targetHeight, pageHeight, scrollTop);
+                $('html , body').animate({scrollTop: scrollTop}, 1000, function () {
+                    $target.css("border", "1px solid red");
+                    $target.css("border-radius", "5px");
+                    let aTimeOut = setTimeout(function () {
+                        $target.css("border", "none");
+                        $target.css("border-radius", "none");
+                        clearTimeout(aTimeOut);
+                    }, 5000)
+                });
+            });
+        }
+
+        //点赞事件
+        function upClickBtn() {
+            const upUrl = "{{ url_for("detail.praise") }}";
+            $(".praise-btn").click(function () {
+                let comment_id = $(this).attr("data-comment-id");
+                let action = $(this).attr("data-action");
+                let params = {"comment_id": comment_id, "action": action};
+                $.ajax({
+                    url: upUrl,
+                    type: 'post',
+                    data: JSON.stringify(params),
+                    contentType: 'application/json',
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            if (res.login) {
+                                location.href = res.login;
+                            } else {
+                                showErrorDiv(res);
+                            }
+                        }
+                    }
+                })
+            })
+        }
+
+        //显示错误提示框
+        function showErrorDiv(error) {
+            let $msgDiv = $(".message-tips");
+            $msgDiv.removeClass("hidden");
+            $("#msg").text(error);
+            $msgDiv.width();
+            divJustifyCenter($msgDiv.width());
+            let aTimeOut = setTimeout(function () {
+                $("#msg").empty();
+                $msgDiv.addClass("hidden");
+                $msgDiv.css("left", "");
+                clearTimeout(aTimeOut);
+            }, 2000)
+        }
+
+        //错误提示框居中
+        function divJustifyCenter(divWidth) {
+            let pageWidth = $(window).width();
+            let $div = $(".message-tips");
+            let toLeft = (pageWidth - divWidth) / 2;
+            $div.css("left", toLeft);
+            //console.log(pageWidth,divWidth,toLeft);
+        }
+
+        //关注作者
+        function attentionAuthor() {
+            const postUrl = "{{ url_for("detail.follow") }}";
+            $(".follow-container").on('click', function () {
+                let followed_id = $(this).find('a').attr("data-id");
+                let deal_type = $(this).find('a').attr("data-type");
+                let params = {"followed_id": followed_id, "deal_type": deal_type};
+                console.log(params);
+                $.ajax({
+                    url: postUrl,
+                    type: 'post',
+                    data: JSON.stringify(params),
+                    contentType: 'application/json',
+                    headers: {'X-CSRFToken': getCookie('csrf_token')},
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload();
+                        } else {
+                            showErrorDiv(res);
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}

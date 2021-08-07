@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户中心</title>
+    <link rel="stylesheet" href="{{ url_for("static",filename="plugins/bootstrap/css/bootstrap.css") }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script href="{{ url_for("static",filename="plugins/bootstrap/js/bootstrap.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user.css") }}">
+    <style>
+        .full-screen:hover {
+            cursor: pointer;
+        }
+
+        .full-screen {
+            margin-left: 10px;
+            color: #2b669a;
+        }
+    </style>
+</head>
+<body>
+{#消息提示框#}
+<div class="hidden post-success text-center">
+    <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+</div>
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{#基本资料展示#}
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <p>基本资料<span class="full-screen" data-type="open"><i class="fa fa-arrows-alt" aria-hidden="true"></i></span></p>
+    </div>
+    <div class="panel-body">
+        <form class="info-form">
+            <div class="form-group">
+                <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            </div>
+            <div class="form-group">
+                <label for="nick_name">昵称</label>
+                <input type="text" class="form-control" id="nick_name" value="{{ request.user.nick_name }}"
+                       name="nick_name" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="signature">个性签名</label>
+                <textarea name="signature" id="signature" rows="5"
+                          class="form-control">{{ request.user.signature }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="" style="margin-right: 5px;">性别</label>
+                {% if request.user.gender=="MAN" %}
+                    <label class="radio-inline">
+                        <input type="radio" name="gender" value="MAN" checked> 男
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="gender" value="WOMAN"> 女
+                    </label>
+                {% else %}
+                    <label class="radio-inline">
+                        <input type="radio" name="gender" value="MAN"> 男
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="gender" value="WOMAN" checked> 女
+                    </label>
+                {% endif %}
+            </div>
+            <div><a class="form-control btn btn-primary" id="info_alter_btn">保存</a></div>
+        </form>
+    </div>
+</div>
+</body>
+<script>
+    $(function () {
+        infoAlter();
+        largeIframeWindow();
+    });
+
+    function successFunction() {
+        showSuccess();
+        let aTimeOut=setTimeout(function () {
+            location.reload();
+            clearTimeout(aTimeOut);
+        },2000)
+    }
+
+    //显示成功提示框
+    function showSuccess() {
+        let $msgDiv = $(".post-success");
+        $msgDiv.removeClass("hidden");
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //显示错误提示框
+    function showErrorDiv(error) {
+        let $msgDiv = $(".message-tips");
+        $msgDiv.removeClass("hidden");
+        $("#msg").text(error);
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $("#msg").empty();
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //消息提示框居中
+    function divJustifyCenter($div, divWidth) {
+        let pageWidth = $(window).width();
+        let toLeft = (pageWidth - divWidth) / 2;
+        $div.css("left", toLeft);
+        //console.log(pageWidth,divWidth,toLeft);
+    }
+
+    //信息修改接口
+    function infoAlter() {
+        $("#info_alter_btn").click(function () {
+            const nick_name = $("#nick_name").val();
+            const signature = $("#signature").val();
+            const gender = $("input[name='gender']:checked").val();
+            const oldName = "{{ request.user.nick_name }}";
+            const oldSignature = "{{ request.user.signature }}";
+            const oldGender = "{{ request.user.gender }}";
+            let flags = 0;
+            if (nick_name === oldName && signature === oldSignature && gender === oldGender) {
+                showErrorDiv("数据未修改");
+                flags = 1
+            }
+            if (nick_name.length === 0) {
+                showErrorDiv("数据不能为空!");
+                flags = 1;
+            }
+            if (signature.length === 0) {
+                showErrorDiv("数据不能为空!");
+                flags = 1;
+            }
+            if (gender.length === 0) {
+                showErrorDiv("数据不能为空!");
+                flags = 1;
+            }
+            if (flags === 0) {
+                const postUrl = "{{ url_for("user.base_info") }}";
+                $.ajax({
+                    url: postUrl,
+                    data: $(".info-form").serializeArray(),
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {//成功
+                            successFunction();
+                        } else {//失败
+                            showErrorDiv(res.error);
+                        }
+                    }
+                })
+            }
+        });
+    }
+
+    //调整左边栏头像位置
+    function adjustAvatar(parentWindow) {
+        let $item = parentWindow.find(".user-menu");
+        let $picDiv = parentWindow.find(".user-pic");
+        let distance = $item.offset();
+        let divWidth = $item.width();
+        let toLeft = distance.left;
+        let picDivWidth = $picDiv.width();
+        let allLeftDistance = (divWidth - picDivWidth) / 2 + toLeft;
+        $picDiv.css("left", allLeftDistance);
+        //console.log(allLeftDistance);
+    }
+
+    //放大iframe窗口
+    function largeIframeWindow() {
+        let $item = $(".full-screen");
+        let parentWindow = $(window.parent.document);
+        $item.on("click", function () {
+            let dealType = $item.attr("data-type");
+            if (dealType === "close") {
+                $item.attr("data-type", "open");
+                parentWindow.find(".user-menu").removeClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-8 col-sm-8 col-md-9 col-lg-9"
+                ).removeClass("col-xs-12 col-sm-12 col-md-12 col-lg-12");
+                adjustAvatar(parentWindow)
+            }
+            if (dealType === "open") {
+                $item.attr("data-type", "close");
+                parentWindow.find(".user-menu").addClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-12 col-sm-12 col-md-12 col-lg-12"
+                ).removeClass("col-xs-8 col-sm-8 col-md-9 col-lg-9");
+                adjustAvatar(parentWindow);
+            }
+        });
+        $item.hover(function () {
+            $item.css("font-size", "24px")
+        }, function () {
+            $item.css("font-size", "20px")
+        })
+    }
+</script>
+</html>

@@ -1,0 +1,84 @@
+@media (max-width: 768px) {
+
+}
+
+@media (max-width: 250px) {
+
+}
+
+@media (min-width: 769px) {
+
+}
+.navbar-default{
+    border-color: #2b669a !important;
+}
+.navbar-right li a {
+    color: white !important;
+}
+
+#my_nav:hover {
+    background-color: #2b669a;
+}
+
+.icon-bar {
+    background-color: white !important;
+}
+
+a:hover {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.font-40-red {
+    font-size: 40px;
+    color: white;
+}
+
+.message-tips {
+    color: white;
+    font-size: 16px;
+    position: fixed;
+    top: 10%;
+    margin: auto;
+    border: 1px solid red;
+    box-shadow: inset 1px 1px 1px 0 #d9534f;
+    border-radius: 5px;
+    width: 200px;
+    height: auto;
+    background: red;
+    min-width: 150px !important;
+    z-index: 999999;
+}
+
+.post-success {
+    position: fixed;
+    top: 10%;
+    margin: auto;
+    border-radius: 5px;
+    height: auto;
+    background: #4cae4c;
+    min-width: 100px !important;
+    z-index: 999999;
+}
+
+.post-success p {
+    color: white;
+    font-size: 20px;
+    margin: 0 0;
+}
+
+.input-group input {
+    border-right: none !important;
+}
+
+.show-pwd {
+    background: white;
+    border: 1px solid #ccc;
+    border-left: none !important;
+}
+
+.show-pwd:hover {
+    cursor: pointer;
+    font-size: 18px;
+    color: #2b669a;
+}

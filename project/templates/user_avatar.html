@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户中心</title>
+    <link rel="stylesheet" href="{{ url_for("static",filename="plugins/bootstrap/css/bootstrap.css") }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script href="{{ url_for("static",filename="plugins/bootstrap/js/bootstrap.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user.css") }}">
+    <style>
+        .pic-show img {
+            width: 160px;
+            height: 160px;
+            border-radius: 80px;
+        }
+
+        .my-upload {
+            position: fixed;
+            opacity: 0;
+        }
+
+        .full-screen:hover {
+            cursor: pointer;
+        }
+
+        .full-screen {
+            margin-left: 10px;
+            color: #2b669a;
+        }
+
+        @media (max-width: 768px) {
+            .message-tips {
+                width: 60% !important;
+            }
+
+            .pic-show img {
+                width: 80px;
+                height: 80px;
+                border-radius: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+{#消息提示框#}
+<div class="hidden post-success text-center">
+    <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+</div>
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{#基本资料展示#}
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <p>头像设置<span class="full-screen" data-type="open"><i class="fa fa-arrows-alt" aria-hidden="true"></i></span></p>
+    </div>
+    <div class="panel-body">
+        <div class="pic-show text-center">
+            <img src="{{ request.user.avatar_url }}" alt="用户头像" id="show-avatar">
+        </div>
+        <form class="info-form top-10px">
+            <div class="form-group">
+                <input class="form-control" type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            </div>
+            <div class="form-group upload-place">
+                <a class="form-control btn btn-success">
+                    <i class=" fa fa-upload" aria-hidden="true"></i>上传头像
+                </a>
+            </div>
+            <div class="form-group"><a class="form-control btn btn-primary" id="upLoadFileBtn">保存</a></div>
+            <div class="my-upload text-center">
+                <label for="nick_name">
+                    <input type="file" class="form-control" id="avatar" name="avatar">
+                </label>
+            </div>
+        </form>
+        <div class="text-center">注:<span style="color: red;">为了头像的美观，请尽量选择1:1比列的图片用作头像</span></div>
+    </div>
+</div>
+</body>
+</html>
+<script>
+    $(function () {
+        uploadAdjust();
+        windowWidthChang();
+        largeIframeWindow();
+        postAvatar();
+    });
+
+    function successFunction() {
+        showSuccess();
+        let aTimeOut=setTimeout(function () {
+            location.reload();
+            clearTimeout(aTimeOut);
+        },2000)
+    }
+
+    //显示成功提示框
+    function showSuccess() {
+        let $msgDiv = $(".post-success");
+        $msgDiv.removeClass("hidden");
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //显示错误提示框
+    function showErrorDiv(error) {
+        let $msgDiv = $(".message-tips");
+        $msgDiv.removeClass("hidden");
+        $("#msg").text(error);
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $("#msg").empty();
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //消息提示框居中
+    function divJustifyCenter($div, divWidth) {
+        let pageWidth = $(window).width();
+        let toLeft = (pageWidth - divWidth) / 2;
+        $div.css("left", toLeft);
+        //console.log(pageWidth,divWidth,toLeft);
+    }
+
+    //调整左边栏头像位置
+    function adjustAvatar(parentWindow) {
+        let $item = parentWindow.find(".user-menu");
+        let $picDiv = parentWindow.find(".user-pic");
+        let distance = $item.offset();
+        let divWidth = $item.width();
+        let toLeft = distance.left;
+        let picDivWidth = $picDiv.width();
+        let allLeftDistance = (divWidth - picDivWidth) / 2 + toLeft;
+        $picDiv.css("left", allLeftDistance);
+        //console.log(allLeftDistance);
+    }
+
+    //放大iframe窗口
+    function largeIframeWindow() {
+        let $item = $(".full-screen");
+        let parentWindow = $(window.parent.document);
+        $item.on("click", function () {
+            let dealType = $item.attr("data-type");
+            if (dealType === "close") {
+                $item.attr("data-type", "open");
+                parentWindow.find(".user-menu").removeClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-8 col-sm-8 col-md-9 col-lg-9"
+                ).removeClass("col-xs-12 col-sm-12 col-md-12 col-lg-12");
+                adjustAvatar(parentWindow);
+            }
+            if (dealType === "open") {
+                $item.attr("data-type", "close");
+                parentWindow.find(".user-menu").addClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-12 col-sm-12 col-md-12 col-lg-12"
+                ).removeClass("col-xs-8 col-sm-8 col-md-9 col-lg-9");
+                adjustAvatar(parentWindow);
+            }
+        });
+        $item.hover(function () {
+            $item.css("font-size", "24px")
+        }, function () {
+            $item.css("font-size", "20px")
+        })
+    }
+
+    //监控窗口宽度变化
+    function windowWidthChang() {
+        $(window).resize(function () {
+            uploadAdjust();
+        });
+    }
+
+    //上传文件样式调整
+    function uploadAdjust() {
+        let $uploadPlace = $(".upload-place");
+        let offsetItem = $uploadPlace.offset();
+        let itemWidth = $uploadPlace.innerWidth();
+        let $divItem = $(".my-upload");
+        $divItem.css("left", offsetItem.left);
+        $divItem.css("top", offsetItem.top);
+        $divItem.find("input").css("width", itemWidth)
+    }
+
+    //头像上传接口
+    function postAvatar() {
+        $("#avatar").change(function () {
+            let tag = 1;
+            //利用文件阅读器对象(内置)完成头像的预览
+            //1.生成一个文件阅读器对象
+            let fileReaderObj = new FileReader();
+            //2.获取用户上传的文件
+            let fileObj = $(this)[0].files[0];
+            //3.将文件对象给文件阅读器对象
+            fileReaderObj.readAsDataURL(fileObj);
+            //4.利用阅读器将文件展示到前端(修改src属性）,需要等图片加载才执行，onload
+            fileReaderObj.onload = function () {
+                $("#show-avatar").attr('src', fileReaderObj.result)
+            }
+        });
+        $("#upLoadFileBtn").on("click", function () {
+            //因为包含文件对象，new一个formData
+            let formDataObj = new FormData();
+            //1.添加普通数据的键值对；
+            $.each($(".info-form").serializeArray(), function (index, obj) {
+                //console.log(index, obj);
+                formDataObj.append(obj.name, obj.value);
+            });
+            formDataObj.append('avatar', $('#avatar')[0].files[0]);
+            //console.log(formDataObj.get('avatar'), formDataObj.get('csrf_token'));
+            let postUrl = "{{ url_for("user.avatar") }}";
+            $.ajax({
+                url: postUrl,
+                data: formDataObj,
+                type: 'POST',
+                contentType: false,
+                processData: false,
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {//成功
+                        successFunction();
+                    } else {//失败
+                        showErrorDiv(res.error);
+                    }
+                }
+            })
+        })
+    }
+</script>

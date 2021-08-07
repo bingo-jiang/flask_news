@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png"
+          href="{{ url_for('static',filename='images/02.ico',_external=True) }}"
+          sizes="48x48">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/bootstrap/css/bootstrap.min.css',_external=True) }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static',filename='plugins/font-awesome/css/font-awesome.min.css',_external=True) }}">
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/admin.css',_external=True) }}">
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/user.css") }}">
+    <style>
+        .full-screen:hover {
+            cursor: pointer;
+        }
+
+        .full-screen {
+            margin-left: 10px;
+            color: #2b669a;
+        }
+
+        .table tr a {
+            text-decoration: none;
+        }
+
+        .table tr td a:hover {
+            text-decoration: none;
+            cursor: pointer;
+            color: red;
+        }
+
+        .operation {
+            text-align: center;
+        }
+
+        .operation a {
+            display: flex;
+            justify-content: center;
+        }
+
+        .page-div {
+            display: flex;
+            justify-content: center;
+            flex-direction: row;
+            align-items: center;
+        }
+    </style>
+    {% block css %}
+
+    {% endblock %}
+    {% block js %}
+
+    {% endblock %}
+</head>
+<body>
+{#消息提示框#}
+<div class="hidden post-success text-center">
+    <p><i class="fa fa-check-circle-o" aria-hidden="true"></i>成功</p>
+</div>
+<div class="message-tips hidden">
+    <div class="font-40-red text-center"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="text-center"><span id="msg"></span></div>
+</div>
+{#基本资料展示#}
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <p style="float: left">{% block heading %}{% endblock %}
+            <span class="full-screen" data-type="open"><i class="fa fa-arrows-alt" aria-hidden="true"></i></span>
+        </p>
+        <div style="float: right">{% block btn %}{% endblock %}</div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="panel-body clearfix">
+        {% block content %}
+
+        {% endblock %}
+    </div>
+</div>
+<!--删除确认警告框-->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+            </button>
+            <h4>注意!</h4>
+            <p>你正在进行数据的删除操作。请确认是否删除</p>
+            <p style="text-align: right;">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="deleteBtn" type="button" class="btn btn-danger" data-type="delete">确定</button>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    $(function () {
+        largeIframeWindow();
+        initDeleteModel();
+        bindClickCheckFilter2();
+    });
+
+    //筛选按钮点击事件
+    function bindClickCheckFilter2() {
+        $('.filter-area').find(':checkbox').click(function () {
+            location.href = $(this).parent().attr('href');
+        });
+    }
+
+    //封装的Ajax请求
+    function myPostAjax(targetUrl, params) {
+        $.ajax({
+            url: targetUrl,
+            type: "POST",
+            headers: {'X-CSRFToken': "{{ csrf_token() }}"},
+            data: params,
+            dataType: "JSON",
+            success: function (res) {
+                if (res.status) {
+                    successFunction();
+                } else {
+                    showErrorDiv(res.error);
+                }
+            }
+        })
+    }
+
+    //删除确认警告框
+    function initDeleteModel() {
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            let button = $(event.relatedTarget);
+            let dataId = button.data('id');
+            $('#deleteBtn').attr('data-id', dataId);
+            console.log(button, dataId)
+        });
+    }
+
+    function successFunction() {
+        showSuccess();
+        let aTimeOut = setTimeout(function () {
+            location.reload();
+            clearTimeout(aTimeOut);
+        }, 2000)
+    }
+
+    //显示成功提示框
+    function showSuccess() {
+        let $msgDiv = $(".post-success");
+        $msgDiv.removeClass("hidden");
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //显示错误提示框
+    function showErrorDiv(error) {
+        let $msgDiv = $(".message-tips");
+        $msgDiv.removeClass("hidden");
+        $("#msg").text(error);
+        $msgDiv.width();
+        divJustifyCenter($msgDiv, $msgDiv.width());
+        let aTimeOut = setTimeout(function () {
+            $("#msg").empty();
+            $msgDiv.addClass("hidden");
+            $msgDiv.css("left", "");
+            clearTimeout(aTimeOut);
+        }, 1500)
+    }
+
+    //消息提示框居中
+    function divJustifyCenter($div, divWidth) {
+        let pageWidth = $(window).width();
+        let toLeft = (pageWidth - divWidth) / 2;
+        $div.css("left", toLeft);
+        //console.log(pageWidth,divWidth,toLeft);
+    }
+
+
+    //放大iframe窗口
+    function largeIframeWindow() {
+        let $item = $(".full-screen");
+        let parentWindow = $(window.parent.document);
+        $item.on("click", function () {
+            let dealType = $item.attr("data-type");
+            if (dealType === "close") {
+                $item.attr("data-type", "open");
+                parentWindow.find(".manage-menu").removeClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-9 col-sm-9 col-md-10 col-lg-10"
+                ).removeClass("col-xs-12 col-sm-12 col-md-12 col-lg-12");
+            }
+            if (dealType === "open") {
+                $item.attr("data-type", "close");
+                parentWindow.find(".manage-menu").addClass("hidden");
+                parentWindow.find(".iframe-window").addClass(
+                    "col-xs-12 col-sm-12 col-md-12 col-lg-12"
+                ).removeClass("col-xs-9 col-sm-9 col-md-10 col-lg-10");
+            }
+        });
+        $item.hover(function () {
+            $item.css("font-size", "24px")
+        }, function () {
+            $item.css("font-size", "20px")
+        })
+    }
+</script>
+</html>

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block title %}佳猫资讯-注册{% endblock %}
+{% block news_category %}
+
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/register.css',_external=True) }}">
+{% endblock %}
+{% block content %}
+    <div class="container-fluid" style="margin-top: 10px;">
+        <div id="register-div" style="border-radius: 5px;border: 1px solid #00a8c6;padding: 10px 10px;">
+            <p style="font-size: 28px;text-align: center;color: #2b669a;">注册</p>
+            <form id="regForm" method="POST" novalidate>
+                {% for field in form %}
+                    {% if field.name=='csrf_token' %}
+                        {{ form.csrf_token }}
+                    {% else %}
+                        {% if field.name=='img_code' %}
+                            <div class="form-group">
+                                {{ field.label }}<span id="for_img_code" class="error-msg"
+                                                       style="color: red;height: 6px;"></span>
+                                <div class="row">
+                                    <div class="col-md-6" style="margin-top: 5px;">
+                                        {{ field }}
+                                        <div class="error-msg" style="color: red;height: 6px;"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="code-div">
+                                            <img id="imgCode" src="" alt="验证码" title="刷新" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="color: red;height: 6px;" class="error" id="code-error"></div>
+                            </div>
+                        {% elif field.name=='sms_code' %}
+                            <div class="form-group">
+                                {{ field.label }}<span id="for_sms_code" class="error-msg"
+                                                       style="color: red;height: 6px;"></span>
+                                <div class="row">
+                                    <div class="col-xs-7">
+                                        {{ field }}
+                                        <div class="error-msg" style="color: red;height: 6px;"></div>
+                                    </div>
+                                    <div class="col-xs-5">
+                                        <a id="codeBtn" class="btn btn-primary form-control">
+                                            获取验证码
+                                        </a>
+                                    </div>
+                                </div>
+                                <div style="color: red;height: 6px;" class="sms-error"></div>
+                            </div>
+                        {% else %}
+                            <div class="form-group">
+                                {{ field.label }}<span id="for_{{ field.name }}" style="color: red;height: 6px;"
+                                                       class="error-msg"></span>
+                                {{ field }}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <div class="checkbox form-group">
+                    <label>
+                        <input id="user_agreement" type="checkbox">
+                        <span>我已仔细阅读并同意</span>
+                        <a id="url_agreements" type="button" data-toggle="modal" data-target="#myModal">《注册协议》</a>
+                        <span>的内容</span>
+                    </label>
+                    <div class="checkbox-error" style="color: red;height: 8px;"></div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">《注册协议》</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <p>
+                                        欢迎您与***公司共同签署《网络服务使用协议》（下称“本协议”），并使用****公司及相
+                                        关关联企业基于本协议及其不时发布的操作规则为您提供的基于互联网以及移动网的相关服
+                                        务（下称“网络服务”）。
+                                    </p>
+                                    <p>
+                                        在此特别提醒，在您注册使用本站提供的网络服务（包括任何免费或者收费服务）前，请务
+                                        必审慎阅读本协议的全部条款、充分理解各条款内容后再点击同意，特别是免除或者限制责
+                                        任的条款、对您权利限制条款、法律适用和争议解决条款，这些条款将尽可能以加粗及下划
+                                        线方式标识。如您对本协议有任何疑问，可向电话客服咨询。如您按照注册页面提示填写信
+                                        息、阅读并点击同意本协议且完成全部注册流程后，即表示您已充分阅读、理解并接受本协
+                                        议的全部内容，成为本站注册用户并成为具有法律约束力的本协议的一方。如果您不同意本
+                                        协议任何条款及/或随时对其的修改，您应立即停止注册程序或停止使用新浪提供的网络服务。
+                                    </p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a class="btn btn-default" data-dismiss="modal">退出</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a id="btnRegister" class="form-control btn btn-primary">
+                    注册
+                </a>
+                <div style="color: red;height: 6px;" id="error-db"></div>
+                <div class="form-group register-to-login" style="text-align: center;margin-top: 10px;">
+                    <span>已有账号？立即</span><a href="/login">登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div style="height: 50px;"></div>
+{% endblock %}
+{% block js %}
+    <script rel="stylesheet" src="{{ url_for('static',filename='plugins/jQuery/jquery-3.6.0.min.js') }}"></script>
+    <script>
+        $(function () {
+            initImgCode();
+            newImgCode();
+            registerClickBtn();
+            sendSmsBtnClick();
+            checkBoxChose();
+        });
+
+        /*生成随机字符串*/
+        function generateUuid() {
+            return Math.random().toString(36).substr(2);
+        }
+
+        /*初始化验证码图片*/
+        function initImgCode() {
+            let $imgCodeBtn = $("#imgCode");
+            var randomStr = generateUuid();
+            $imgCodeBtn.attr('src', "/code?img_id=" + randomStr);
+            $imgCodeBtn.attr('img_id', randomStr);
+            $("#img_id").attr('value', randomStr);
+        }
+
+        /*刷新图片验证码*/
+        function newImgCode() {
+            let $imgCodeBtn = $("#imgCode");
+            $imgCodeBtn.click(function () {
+                var newRandomStr = Math.random().toString(36).substr(2);
+                $(this).attr('src', "/code?img_id=" + newRandomStr);
+                $imgCodeBtn.attr('img_id', newRandomStr);
+                $("#img_id").attr('value', newRandomStr);
+            })
+        }
+
+        //注册按钮
+        function registerClickBtn() {
+            $("#btnRegister").click(function () {
+                const $checkBox = $("#user_agreement");
+                let flag = $checkBox.attr("checked");
+                let data = $("#regForm").serializeArray();
+                if (flag === "checked") {
+                    $.ajax({
+                        url: "/register",
+                        data: data,
+                        type: 'POST',
+                        dataType: 'JSON',
+                        success: function (res) {
+                            if (res.status) {
+                                location.href = res.data;
+                            } else {
+                                if (res.sms_error) {
+                                    $(".sms-error").text(res.sms_error)
+                                }
+                                if (res.db_error) {
+                                    $("#error-db").text(res.db_error)
+                                }
+                                $.each(res.error, function (key, value) {
+                                    let $span = $("#for_" + key);
+                                    $span.text(value[0]);
+                                    if (key === img_code || key === sms_code) {
+                                        $span.next().find('input').addClass('has-error');
+                                    } else {
+                                        $span.parent().addClass('has-error');
+                                    }
+                                    //$span.parent().addClass('has-error');
+                                    let timeCount1 = setTimeout(function () {
+                                        $('.error-msg').empty();
+                                        if (key === img_code || key === sms_code) {
+                                            $span.next().find('input').removeClass('has-error');
+                                        } else {
+                                            $span.parent().removeClass('has-error');
+                                        }
+                                        clearTimeout(timeCount1)
+                                    }, 5000)
+                                })
+                            }
+                        }
+                    })
+                } else {
+                    $(".checkbox-error").text("请勾选同意选择框");
+                    let timeCount1 = setTimeout(function () {
+                        $('.checkbox-error').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+            });
+        }
+
+        $('input').focus(function () {
+            $(this).next().text('').parent().removeClass('has-error');
+        });
+
+        /*验证码按钮事件绑定*/
+        function sendSmsBtnClick() {
+            $('#codeBtn').click(function () {
+                $('.error-msg').empty();
+                //获取用户手机号
+                let $mobile = $('#mobile');
+                let $img_code = $('#img_code');
+                let $imgCode = $("#imgCode");
+                let mobilePhone = $mobile.val();
+                let imgCode = $img_code.val();
+                let imgId = $imgCode.attr('img_id');
+                let flags = 0;
+                const sendSMSUrl = "/send/sms" + "?mobile=" + mobilePhone + "&img_code=" + imgCode + "&img_id=" + imgId;
+                if (mobilePhone.length === 0) {
+                    $mobile.next('.error-msg').text("手机号输入不能为空");
+                    flags = 1;
+                    let timeCount1 = setTimeout(function () {
+                        $('.error-msg').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+                if (imgCode.length === 0) {
+                    $('#code-error').text("验证码输入不能为空");
+                    flags = 1;
+                    let timeCount1 = setTimeout(function () {
+                        $('.error').empty();
+                        clearTimeout(timeCount1)
+                    }, 5000)
+                }
+                if (flags === 0) {
+                    //发送Ajax请求，把手机号传到后端
+                    $.ajax({
+                        url: sendSMSUrl,
+                        type: "GET",
+                        dataType: "JSON",
+                        success: function (res) {
+                            //发送成功后自动执行，res是后端返回值
+                            if (res.status) {
+                                sendTime();
+                                console.log(res, "成功");
+                            } else {
+                                console.log(res);
+                                //$.each(res.error, function (key, value) {$("#id_" + key).next().text(value[0])});
+                                $(".sms-error").text(res.error);
+                                let timeCount1 = setTimeout(function () {
+                                    $('.sms-error').empty();
+                                    clearTimeout(timeCount1)
+                                }, 5000)
+                            }
+                        },
+                    })
+                }
+            });
+
+            /*倒计时*/
+            function sendTime() {
+                let $codeBtn = $('#codeBtn');
+                $codeBtn.attr('disabled', true);
+                let time = 60;
+                let remind = setInterval(function () {
+                    $codeBtn.text(time + '秒后重新发送');
+                    time = time - 1;
+                    if (time < 1) {
+                        clearInterval(remind);
+                        $codeBtn.text('获取验证码').attr('disabled', false);
+                    }
+                }, 1000)
+            }
+        }
+
+        /*协议选中框事件*/
+        function checkBoxChose() {
+            $("#user_agreement").click(function () {
+                const $checkBox = $("#user_agreement");
+                let flag = $checkBox.attr("checked");
+                if (flag === "checked") {
+                    $checkBox.attr('checked', false);
+                }
+                if (typeof flag === "undefined") {
+                    $checkBox.attr('checked', true);
+                }
+            })
+        }
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'admin/manage_base.html' %}
+
+{% block title %}
+    用户表管理
+{% endblock %}
+{% block heading %}
+    用户表管理
+{% endblock %}
+{% block content %}
+    <!-- List group -->
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <tr>
+                <th>昵称</th>
+                <th>手机</th>
+                <th>注册时间</th>
+                <th>最近登录</th>
+                <th>操作</th>
+            </tr>
+            {% for obj in data.all_list %}
+                <tr>
+                    <td><a class="">{{ obj.nick_name }}</a></td>
+                    <td><a class="">{{ obj.mobile }}</a></td>
+                    <td><a class="">{{ obj.register }}</a></td>
+                    <td><a class="">{{ obj.last_login }}</a></td>
+                    <td class="danger text-center cancel-follow" data-id="{{ obj.id }}">
+                        <a class="">删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!--分页展示-->
+    <div style="margin: 0 auto;">
+        <div class="page-div">
+            <nav aria-label="Page navigation" style="margin-top: 10px;margin-bottom: 20px;">
+                <ul class="pagination">
+                    {% if data.page_html %}
+                        {{ data.page_html|safe }}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% endblock %}

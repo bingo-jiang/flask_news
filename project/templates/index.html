@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block titlte %}
+    佳猫资讯-首页
+{% endblock %}
+{% block js %}
+    <script src="{{ url_for("static",filename="plugins/swiper/swiper-bundle.js") }}"></script>
+    <script>
+        $(function () {
+            let mySwiper = new Swiper('.swiper-container', {
+                direction: 'horizontal', // 垂直切换选项
+                loop: true, // 循环模式选项
+                autoplay: true,
+                slidesOffsetBefore: 0,
+                speed: 1000,
+                grabCursor: true,
+                navigation: true,
+                createElements: true,
+                // 如果需要分页器
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+            })
+        });
+    </script>
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static",filename="plugins/swiper/swiper-bundle.css") }}">
+    <style>
+        a:hover {
+            text-decoration: none;
+        }
+
+        .notice {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .notice-item a:hover {
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+
+        .swiper-img {
+            width: auto;
+            max-height: 350px;
+        }
+
+        .out_container {
+            max-width: 95%;
+            height: auto;
+            margin: 15px auto;
+            position: relative;
+        }
+
+        .in_container {
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .swiper-container {
+            height: 350px;
+        }
+
+        .panel {
+            border-radius: 0 !important;
+        }
+
+        .banner-title {
+            font-size: 24px;
+            padding: 15px
+        }
+
+        .banner-digest {
+            font-size: 16px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 769px) {
+            .swiper-img {
+                width: auto;
+                height: 200px;
+            }
+
+            .swiper-container {
+                height: 320px;
+            }
+
+            .banner-title {
+                font-size: 16px;
+            }
+
+            .banner-digest {
+                font-size: 14px;
+                padding: 15px;
+                margin-top: 5px;
+            }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="notice">
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <i class="fa fa-bell" aria-hidden="true"></i>最新公告：
+                <span class="notice-item">
+                    {% if data.latest_notice %}
+                        <a href="{{ url_for("nc.notice_scan",nid=data.latest_notice.id) }}">{{ data.latest_notice.title }}</a>
+                    {% endif %}
+                </span>
+                <a href="{{ url_for("nc.notice_list") }}" style="float: right;">
+                    更多公告
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="out_container hidden">
+        <div class="in_container">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    {% for new_obj in data.suggestions %}
+                        <div class="swiper-slide text-center hot-items-container">
+                            <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">
+                                <img src="{{ new_obj.index_image_url }}" alt="" class="swiper-img">
+                            </a>
+                            <div style="margin-left: 8px;font-size:16px;margin-top: 15px;padding: 15px;">
+                                <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">
+                                    {{ new_obj.title }}
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <!-- 如果需要分页器 -->
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev swiper_btn"></div>
+                <div class="swiper-button-next swiper_btn"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="out_container">
+        <div class="in_container">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    {% for new_obj in data.suggestions %}
+                        <div class="swiper-slide">
+                            <div style="word-break:break-all;">
+                                <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">
+                                    <div class="" style="float: left;">
+                                        <img src="{{ new_obj.index_image_url }}" alt="" class="swiper-img">
+                                    </div>
+                                    <div class="text-center banner-title">
+                                        {{ new_obj.title }}
+                                    </div>
+                                    <p class="banner-digest">
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ new_obj.digest }}</p>
+                                    <div class="clearfix"></div>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <!-- 如果需要分页器 -->
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev swiper_btn"></div>
+                <div class="swiper-button-next swiper_btn"></div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid" style="">
+        <div class="news-container col-lg-9 container-fluid">
+            {% block news %}
+
+            {% endblock %}
+        </div>
+        <div class="col-lg-3 hidden-sm hidden-xs">
+            <div class="panel panel-info">
+                <div class="panel-heading" style="text-align: center;">热门资讯TOP10</div>
+                <ul class="list-group" id="hot_news">
+                    {% for new_obj in data.hot_news %}
+                        <li class="list-group-item">
+                            <div class="{{ loop.index | my_tag }}" style="display: inline">{{ loop.index }}</div>
+                            <div style="display: inline">
+                                <a href="{{ url_for("detail.detail",nid=new_obj.id) }}">{{ new_obj.title }}</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="panel panel-default hidden-xs">
+                <div class="panel-body text-center" style="min-height: 500px;">
+                    广告区
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
